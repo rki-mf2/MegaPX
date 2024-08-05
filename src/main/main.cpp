@@ -42,16 +42,16 @@ int main(int argc, char const **argv)
 	StopClock megaXUsage;
 
 	if (__cplusplus != 202002L) {
-        std::cerr << "[INFO-DEV] MegaX supports only C++20, your version is: " << __cplusplus << std::endl;
+        std::cerr << "[INFO-DEV] MegaPX supports only C++20, your version is: " << __cplusplus << std::endl;
         return 1;
     }
 
 	else{
 
-		std::cout << "MegaX passed C++20 version check! your version is: " << __cplusplus << std::endl;
+		std::cout << "MegaPX passed C++20 version check! your version is: " << __cplusplus << std::endl;
 	}
 
-	seqan3::argument_parser MegaXParser("MegaX", argc, argv);
+	seqan3::argument_parser MegaXParser("MegaPX", argc, argv);
 	CmdArguments args { };
 	initializeMainArgumentParser(MegaXParser, args);
 
@@ -78,14 +78,14 @@ int main(int argc, char const **argv)
 	const std::string memoryUsageReport = bin.string() + "/memory.txt";
 
 	std::ofstream memoryLog(memoryUsageReport);
-	memoryLog << "*********************** MegaX Complete Usage Report ******" << '\n';
+	memoryLog << "*********************** MegaPX Complete Usage Report ******" << '\n';
 	memoryLog << "* Real time : " << megaXUsage.elapsed() << " sec         " << '\n';
 	memoryLog << "* CPU time  : " << cputime() << " sec                    " << '\n';
 	memoryLog << "* Peak RSS  : " << peakSizeMByte << " MByte              " << '\n';
 	memoryLog << "**********************************************************" << '\n';
 
 	std::cout << '\n';
-	std::cout << "*********************** MegaX Complete Usage Report ******" << std::endl;
+	std::cout << "*********************** MegaPX Complete Usage Report ******" << std::endl;
 	std::cout << "* Real time : " << megaXUsage.elapsed() << " sec         " << std::endl;
 	std::cout << "* CPU time  : " << cputime() << " sec                    " << std::endl;
 	std::cout << "* Peak RSS  : " << peakSizeMByte << " MByte              " << std::endl;

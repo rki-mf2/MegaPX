@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.16)
 
-project (megaX CXX C)
+project (megapx CXX C)
 
 add_compile_options(-DDEBUG)
 add_compile_options(-DBUILD_SHARED_LIBS=ON)

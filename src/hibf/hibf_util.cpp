@@ -843,7 +843,9 @@ void HIBF::multiIndexing(const std::string& matrixFilePath, const std::string& b
 
     seqan3::debug_stream << "[INFO] Split size: " << splitSize << '\n';
 
+    seqan3::debug_stream << "[INFO] Counting number of input peptides... " << '\n';
     for (auto & record : fin_query_count) numberOfQueries += 1; 
+    seqan3::debug_stream << "[INFO] Counting number of input proteins... " << '\n';
     for (auto & record : fin_ref_count) numberOfReferences += 1; 
 
     seqan3::debug_stream << "[INFO] Number of queries: " << numberOfQueries << '\n';
@@ -906,7 +908,7 @@ void HIBF::multiIndexing(const std::string& matrixFilePath, const std::string& b
         }
         if (outlierDetection){
             numberOfOutliers++;
-            seqan3::debug_stream << "[INFO] Detected outlier in the header: "<< id << '\n';
+            //seqan3::debug_stream << "[INFO] Detected outlier in the header: "<< id << '\n';
             continue;
         }
 
@@ -960,11 +962,19 @@ void HIBF::multiIndexing(const std::string& matrixFilePath, const std::string& b
 
             seqan3::debug_stream << "[INFO] Processing results vector .... " << '\n';
 
-            std::vector<size_t> bits(currentInsertedSequences, 0);
+            std::vector<int> bits(currentInsertedSequences, 0);
             auto numberOfPeptides = resultsVector.size();
-            for (size_t col = 0; col < currentInsertedSequences; ++col)
+
+            // Checkpoint 1
+            if (currentInsertedSequences > resultsVector[0].size() || currentInsertedSequences > headers.size()) {
+                // Handle the error, e.g., log and exit or throw an exception
+                std::cerr << "Error: currentInsertedSequences exceeds the size of resultsVector or headers\n";
+                
+            }
+
+            for (int col = 0; col < currentInsertedSequences; ++col)
             {
-                for (size_t row = 0; row < numberOfPeptides; ++row)
+                for (int row = 0; row < numberOfPeptides; ++row)
                 {
                     bits[col] += resultsVector[row][col];
                 }

@@ -1,4 +1,4 @@
-# MegaX: Fast Peptide Assignment Method Using Index Databases with Various Counting Algorithms
+# MegaPX: Fast Peptide Assignment Method Using Index Databases with Various Counting Algorithms
 
 <!-- ## Citation  -->
 
@@ -11,27 +11,27 @@
 * [Parameters](#parameters )
 
 ## <a name="description"></a>Description
-MegaX is designed to mutate protein databases, enabling users to search for de novo peptides in both the original and mutated versions. The tool employs a k-mer-based search, providing rapid and highly accurate peptide assignment capability. Beyond this primary function, the tool has numerous other use cases, including metaproteomics classification, virus assignment, and peptide classification.   
-MegaX utilizes four distinct counting algorithms: [IBF](https://github.com/seqan/hibf/), [HBF](https://github.com/seqan/hibf/), [FM-Index](https://github.com/seqan/seqan3), and binary search. As we assessed these four algorithms in terms of runtime and performance, it became imperative to incorporate them into a single tool, allowing users the freedom to choose based on their specific use case. Mutation generation relies on a substitution matrix containing values proportional to the likelihood of amino acid `i` mutating into amino acid `j` across all possible pairs of amino acids. Each reference amino acid sequence undergoes k-merization, and mutated k-mers are generated based on the user-defined score, which is the sum of k-mer alignment scores. The tool is designed in step commands, which will be included as rules in the Snakemake pipeline. 
+MegaPX is designed to mutate protein databases, enabling users to search for de novo peptides in both the original and mutated versions. The tool employs a k-mer-based search, providing rapid and highly accurate peptide assignment capability. Beyond this primary function, the tool has numerous other use cases, including metaproteomics classification, virus assignment, and peptide classification.   
+MegaPX utilizes four distinct counting algorithms: [IBF](https://github.com/seqan/hibf/), [HBF](https://github.com/seqan/hibf/), [FM-Index](https://github.com/seqan/seqan3), and binary search. As we assessed these four algorithms in terms of runtime and performance, it became imperative to incorporate them into a single tool, allowing users the freedom to choose based on their specific use case. Mutation generation relies on a substitution matrix containing values proportional to the likelihood of amino acid `i` mutating into amino acid `j` across all possible pairs of amino acids. Each reference amino acid sequence undergoes k-merization, and mutated k-mers are generated based on the user-defined score, which is the sum of k-mer alignment scores. The tool is designed in step commands, which will be included as rules in the Snakemake pipeline. 
 ## <a name="installation"></a>Installation   
-MegaX runs only under Linux x86_64; we recommend the Conda installations for all dependencies by:   
+MegaPX runs only under Linux x86_64; we recommend the Conda installations for all dependencies by:   
 ```
-conda create --name megax_env OR  conda create --prefix path/to/megax_env  
-conda activate megax_env  OR conda activate path/to/megax_env     
+conda create --name MegaPX_env OR  conda create --prefix path/to/MegaPX_env  
+conda activate MegaPX_env  OR conda activate path/to/MegaPX_env     
 conda install -c conda-forge cxx-compiler   
 conda install conda-forge::gcc  
 conda install conda-forge::clang
 ```
-Building MegaX from source:   
+Building MegaPX from source:   
 ```
-git clone https://github.com/lutfia95/MegaX.git   
-cd MegaX  
+git clone https://github.com/lutfia95/MegaPX.git   
+cd MegaPX  
 mkdir build && cd build   
 cmake ../src   
 make
 ```
-The executable will be built in `path/to/MegaX/build/main/`   
-Users can also download the binary pre-built version: [Linux x86_64](https://github.com/lutfia95/MegaX/releases/download/v.0.0.0/MegaX-0.0.0-Linux_x64.tar.gz)
+The executable will be built in `path/to/MegaPX/build/main/`   
+Users can also download the binary pre-built version: [Linux x86_64](https://github.com/lutfia95/MegaPX/releases/download/v.0.0.0/MegaPX-0.0.0-Linux_x64.tar.gz)
 ## <a name="commands"></a>Commands  
 |Subcommand                                                                |Description                                                     |
 |:-------------------------------------------------------------------------|:---------------------------------------------------------------|
@@ -52,124 +52,124 @@ Users can also download the binary pre-built version: [Linux x86_64](https://git
 |[**evaluate**](#evaluate)                                                 |Run results evaluation and generate assignment report           |
 |[**classification**](#classification)                                     |Normalize sequences on species level (used for refSeqViral)     |
 
-### <a name="stat"></a>MegaX stat
+### <a name="stat"></a>MegaPX stat
 Print reference statistics by generating mapping and length files. The last evaluation step uses the mapping file to map each assignment score to the target reference name. 
 ```
-./megaX stat -q kmer_size -i path/to/reference.fasta -m path/to/blosum62 -o path/to/output_dir
+./megapx stat -q kmer_size -i path/to/reference.fasta -m path/to/blosum62 -o path/to/output_dir
 ```
 
-### <a name="mutate_stat"></a>MegaX mutate_stat
+### <a name="mutate_stat"></a>MegaPX mutate_stat
 Print mutation statistics with a number of mutated sequences. 
 ```
-./megaX mutate_stat -q kmer_size -s min_mutation_score -i path/to/reference.fasta -m path/to/blosum62
+./megapx mutate_stat -q kmer_size -s min_mutation_score -i path/to/reference.fasta -m path/to/blosum62
 ```
 
-### <a name="ibf_stat"></a>MegaX ibf_stat
+### <a name="ibf_stat"></a>MegaPX ibf_stat
 Print approximate IBF size with the number of technical bins (HIBF). 
 
 ```
-./megaX ibf_stat -i path/to/file.fasta -m path/to/blosum62 -t threads -s min_mutation_score -q kmer_size -o path/to/output_dir -v path/to/output_dir/hashes.vect -a number_of_hash_functions
+./megapx ibf_stat -i path/to/file.fasta -m path/to/blosum62 -t threads -s min_mutation_score -q kmer_size -o path/to/output_dir -v path/to/output_dir/hashes.vect -a number_of_hash_functions
 
 ```
-### <a name="write_db"></a>MegaX write_db
-Write the mutated database to an output FASTA file. However, utilizing this option for mutation is not advisable, as MegaX will generate a FASTA file containing mutated sequences (one mutation per sequence). This approach consumes significant hard disk storage and results in slow runtime.
+### <a name="write_db"></a>MegaPX write_db
+Write the mutated database to an output FASTA file. However, utilizing this option for mutation is not advisable, as MegaPX will generate a FASTA file containing mutated sequences (one mutation per sequence). This approach consumes significant hard disk storage and results in slow runtime.
 ```
-./megaX write_db -q kmer_size -s min_mutation_score -i test1.fasta -m path/to/blosum62 -o path/to/output_dir -t threads
+./megapx write_db -q kmer_size -s min_mutation_score -i test1.fasta -m path/to/blosum62 -o path/to/output_dir -t threads
 ```
 
-### <a name="simulate_peptides"></a>MegaX simulate_peptides
+### <a name="simulate_peptides"></a>MegaPX simulate_peptides
 Simulate peptides from the given reference database and error rate. The number of errors sequence-wise should be assigned. 
 
 ```
-./megaX simulate_peptides -i hendra_protein.fasta -n number_of_peptides -o path/to/output_dir -d number_of_errors
+./megapx simulate_peptides -i hendra_protein.fasta -n number_of_peptides -o path/to/output_dir -d number_of_errors
 ```
 
-### <a name="build_vect"></a>MegaX build_vect
+### <a name="build_vect"></a>MegaPX build_vect
 For counting peptides into index, we recommend directly using multi-indexing command. 
 Build first serialized index containing k_mer hashes `uint64_t`. The output is written to `path/to/output_dir/hashes_vect_q_s.vect` where `q`is the k-mer size and `s`is the user-definied minimum mutation score. 
 
 ```
-./megaX build_vect -i path/to/file.fasta -m path/to/blosum62  -t threads -s min_mutation_score -q kmer_size -o path/to/output_dir -w window_size -Z bool_minimiser
+./megapx build_vect -i path/to/file.fasta -m path/to/blosum62  -t threads -s min_mutation_score -q kmer_size -o path/to/output_dir -w window_size -Z bool_minimiser
 ```
 
-### <a name="build_hibf"></a>MegaX build_hibf
+### <a name="build_hibf"></a>MegaPX build_hibf
 Build HIBF from the input index with several included bins. The output file is the log file, which contains the path to all generated HIBF(s): `path/to/output_dir/filter_HIBF_files.log`.
 ```
-./megaX build_hibf -v path/to/output_dir/hashes_vect_q_s.vect -F path/to/output_dir/filter.hibf -E disable_estimation_ratio -R disable_rearrangement -g max_rearrangement_ratio -r maximum_false_positive_rate -p alpha -S sketch_bits -t threads -a number_of_hash_functions -M split_size
+./megapx build_hibf -v path/to/output_dir/hashes_vect_q_s.vect -F path/to/output_dir/filter.hibf -E disable_estimation_ratio -R disable_rearrangement -g max_rearrangement_ratio -r maximum_false_positive_rate -p alpha -S sketch_bits -t threads -a number_of_hash_functions -M split_size
 
 ```
 
-### <a name="count_hibf"></a>MegaX count_hibf
+### <a name="count_hibf"></a>MegaPX count_hibf
 Counting query peptide sequences into pre-built HIBF. _we highly recommend using the matching_threshold of 0_for the evaluation step. 
 ```
-./megaX count_hibf -F filter_HIBF_files.log -f path/to/query.fasta -q kmer_size -d matching_threshold
+./megapx count_hibf -F filter_HIBF_files.log -f path/to/query.fasta -q kmer_size -d matching_threshold
 
 ```
 
-### <a name="build_ibf"></a>MegaX build_ibf
+### <a name="build_ibf"></a>MegaPX build_ibf
 Build IBF from the input index with a number of included bins. 
 ```
-./megaX build_ibf -v path/to/output_dir/hashes_vect_q_s.vect -o path/to/output_dir -a number_of_hash_functions
+./megapx build_ibf -v path/to/output_dir/hashes_vect_q_s.vect -o path/to/output_dir -a number_of_hash_functions
 
 ```
 
-### <a name="count_ibf"></a>MegaX count_ibf
+### <a name="count_ibf"></a>MegaPX count_ibf
 Counting query peptide sequences into pre-built IBF.
 ```
-./megaX count_ibf -F path/to/output_dir/hashes_vect_q_s.ibf -f path/to/query.fasta -q kmer_size
+./megapx count_ibf -F path/to/output_dir/hashes_vect_q_s.ibf -f path/to/query.fasta -q kmer_size
 
 ```
 
-### <a name="hibf_ref"></a>MegaX hibf_ref
+### <a name="hibf_ref"></a>MegaPX hibf_ref
 Build HIBF from the input database without mutation assignment.
 ```
-./megaX hibf_ref -q kmer_size -i path/to/file.fasta -F path/to/output_dir/filter.hibf -E disable_estimation_ratio -R disable_rearrangement -g max_rearrangement_ratio -r maximum_false_positive_rate -p alpha -S sketch_bits -t threads -a number_of_hash_functions -M split_size
+./megapx hibf_ref -q kmer_size -i path/to/file.fasta -F path/to/output_dir/filter.hibf -E disable_estimation_ratio -R disable_rearrangement -g max_rearrangement_ratio -r maximum_false_positive_rate -p alpha -S sketch_bits -t threads -a number_of_hash_functions -M split_size
 
 ```
 
-### <a name="binary_search"></a>MegaX binary_search
+### <a name="binary_search"></a>MegaPX binary_search
 Run binary search-based classification on the serialized index.
 ```
-./megaX binary_search -v path/to/output_dir/hashes_vect_q_s.vect -f path/to/query.fasta -q kmer_size -t threads
+./megapx binary_search -v path/to/output_dir/hashes_vect_q_s.vect -f path/to/query.fasta -q kmer_size -t threads
 
 ```
 
-### <a name="build_fm"></a>MegaX build_fm
+### <a name="build_fm"></a>MegaPX build_fm
 Build FM index from input reference sequences, running the `stat`sub-commands is important to know the total number of sequences. 
 ```
-./megaX build_fm -q kmer_size -t threads -s min_mutation_score -n total_number_of_sequences -i path/to/file.fasta -X path/to/output_dir/FM.idx -m path/to/blosum62 
+./megapx build_fm -q kmer_size -t threads -s min_mutation_score -n total_number_of_sequences -i path/to/file.fasta -X path/to/output_dir/FM.idx -m path/to/blosum62 
 
 ```
 
-### <a name="count_fm"></a>MegaX count_fm
+### <a name="count_fm"></a>MegaPX count_fm
 Count query sequences in the pre-built FM index.
 ```
-./megaX count_fm -q kmer_size -n total_number_of_sequences -t threads -X path/to/output_dir/FM.idx  -f path/to/query.fasta
+./megapx count_fm -q kmer_size -n total_number_of_sequences -t threads -X path/to/output_dir/FM.idx  -f path/to/query.fasta
 
 ```
 
-### <a name="evaluate"></a>MegaX evaluate
+### <a name="evaluate"></a>MegaPX evaluate
 Evaluate counting results, this step will generate a file containing two columns (assignment_score, sequence_name). The counting results file is named based on the query file name and the building/counting algorithm type. E.g. if the user build the index using IBF, the counting file will be: `path/to/output_dir/query_results_IBF.log`. The name combination makes the follow-rule simple for Snakemake pipeline (`query_file_name` + `_results_` + `algorithm_type` + `.log`). 
 ```
-./megaX evaluate -C path/to/output_dir/query_results_algorithm.log -I path/to/output_dir/reference_id_map.log -V path/to/output_dir/evaluation_results.log -f path/to/query.fasta -D peptide_assignment_score -q kmer_size
+./megapx evaluate -C path/to/output_dir/query_results_algorithm.log -I path/to/output_dir/reference_id_map.log -V path/to/output_dir/evaluation_results.log -f path/to/query.fasta -D peptide_assignment_score -q kmer_size
 
 ```
 
-### <a name="classification"></a>MegaX classification
+### <a name="classification"></a>MegaPX classification
 Species or Strain level normalization of counting results, this sub-command will be used for `refSeqViral` or `RVDB` viruses databases, where the sequences headers are named based on protein and species name (e.g. `> id protein_name [species/strain name]`).
 ```
-./megaX classification -V path/to/output_dir/evaluation_results.log -T path/to/output_dir/classification_report.txt 
+./megapx classification -V path/to/output_dir/evaluation_results.log -T path/to/output_dir/classification_report.txt 
 
 ```
 ## <a name="use-cases "></a>Use-cases
 ### IBF Classification
 IBF classification of a set of peptides against reference database using different commands. 
 ```
-./megaX build_vect -i path/to/file.fasta -m path/to/blosum62  -t threads -s min_mutation_score -q kmer_size -o path/to/output_dir -w window_size -Z bool_minimiser
-./megaX build_ibf -v path/to/output_dir/hashes_vect_q_s.vect -o path/to/output_dir -a number_of_hash_functions
-./megaX count_ibf -F path/to/output_dir/hashes_vect_q_s.ibf -f path/to/query.fasta -q kmer_size
-./megaX evaluate -C path/to/output_dir/query_results_algorithm.log -I path/to/output_dir/reference_id_map.log -V path/to/output_dir/evaluation_results.log -f path/to/query.fasta -D peptide_assignment_score -q kmer_size
-./megaX classification -V path/to/output_dir/evaluation_results.log -T path/to/output_dir/classification_report.txt 
+./megapx build_vect -i path/to/file.fasta -m path/to/blosum62  -t threads -s min_mutation_score -q kmer_size -o path/to/output_dir -w window_size -Z bool_minimiser
+./megapx build_ibf -v path/to/output_dir/hashes_vect_q_s.vect -o path/to/output_dir -a number_of_hash_functions
+./megapx count_ibf -F path/to/output_dir/hashes_vect_q_s.ibf -f path/to/query.fasta -q kmer_size
+./megapx evaluate -C path/to/output_dir/query_results_algorithm.log -I path/to/output_dir/reference_id_map.log -V path/to/output_dir/evaluation_results.log -f path/to/query.fasta -D peptide_assignment_score -q kmer_size
+./megapx classification -V path/to/output_dir/evaluation_results.log -T path/to/output_dir/classification_report.txt 
 ```
 
 ### Mulit-Indexing 
@@ -192,18 +192,18 @@ User parameters:
 ```
 Example use case: 
 ```
-./megaX multi_indexing -m blosum62 -b black_list.txt -i refSeqViral_monkeypox.fasta -f monkeypox_sample/E02292_MonkeyPox_SP3_DDA_1.fasta -q 5 -s 100 -t 40 -Z 0 -a 2 -M 1000 -F monckey.log -D 0.8
+./megapx multi_indexing -m blosum62 -b black_list.txt -i refSeqViral_monkeypox.fasta -f monkeypox_sample/E02292_MonkeyPox_SP3_DDA_1.fasta -q 5 -s 100 -t 40 -Z 0 -a 2 -M 1000 -F monckey.log -D 0.8
 ```
 
 
 ## <a name="parameters "></a>Parameters  
 ```
 DESCRIPTION
-    MegaX builds and counts mutations from and in datasets with the classification of unknown samples.
+    MegaPX builds and counts mutations from and in datasets with the classification of unknown samples.
 
 POSITIONAL ARGUMENTS
     ARGUMENT-1 (std::string)
-          Modus to run MegaX: Value must be one of
+          Modus to run MegaPX: Value must be one of
           [build_vect, build_ibf, count_ibf, build_hibf, count_hibf, binary_search, build_fm, count_fm, counting, stat,
             mutate_stat, evaluate, hibf_ref, classification, ibf_stat, write_db, mutate_seq_len, simulate_peptides, profile,
             test, multi_indexing].
@@ -284,7 +284,7 @@ OPTIONS
 
 VERSION
     Last update: 2024
-    MegaX version: 0.0.0
+    MegaPX version: 0.0.0
     SeqAn version: 3.4.0-rc.1
 
 LEGAL

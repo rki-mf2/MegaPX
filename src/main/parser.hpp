@@ -152,13 +152,13 @@ struct FMParams
 void initializeMainArgumentParser(argument_parser &MegaXParser, CmdArguments &args)
 {
 	MegaXParser.info.author = "Ahmad Lutfi";
-	MegaXParser.info.short_description = "MegaX: protein and sequence level taxonomic classification using mutated databases.";
+	MegaXParser.info.short_description = "MegaPX: protein and sequence level taxonomic classification using mutated databases.";
 	MegaXParser.info.version = "0.0.0";
 	MegaXParser.info.date = "2024";
 	MegaXParser.info.email = "ahmad.lutfi@fu-berlin.de";
 
 	std::vector<std::string> description
-	{ "MegaX builds and counts mutations from and in datasets with the classification of unknown samples." };
+	{ "MegaPX builds and counts mutations from and in datasets with the classification of unknown samples." };
 	MegaXParser.info.description = description;
 
 	std::vector<std::string> synopsis
@@ -166,7 +166,7 @@ void initializeMainArgumentParser(argument_parser &MegaXParser, CmdArguments &ar
 	MegaXParser.info.synopsis = synopsis;
 
 
-	MegaXParser.add_positional_option(args.mode, "Modus to run MegaX : ", value_list_validator
+	MegaXParser.add_positional_option(args.mode, "Modus to run MegaPX : ", value_list_validator
 	{ "build_vect", "build_ibf", "count_ibf", "build_hibf", "count_hibf", "binary_search", "build_fm", "count_fm", "counting", "stat", "mutate_stat", "evaluate", "hibf_ref", "classification", "ibf_stat", "write_db", "mutate_seq_len", "simulate_peptides", "profile", "test", "multi_indexing"});
 
 }
@@ -184,7 +184,7 @@ void initializeMainArgumentParser(argument_parser &MegaXParser, CmdArguments &ar
 void initializeArgumentParser(argument_parser &MegaXParser, CmdArguments &args)
 {
 	MegaXParser.info.author = "Ahmad Lutfi";
-	MegaXParser.info.short_description = "MegaX builds and counts mutations from and in datasets with the classification of unknown samples.";
+	MegaXParser.info.short_description = "MegaPX builds and counts mutations from and in datasets with the classification of unknown samples.";
 	MegaXParser.info.version = "0.0.0";
 	MegaXParser.info.date = "2024";
 	MegaXParser.info.email = "ahmad.lutfi@fu-berlin.de";
