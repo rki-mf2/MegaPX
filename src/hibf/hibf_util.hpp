@@ -303,6 +303,19 @@ class HIBF
          */
         void multiIndexing(const std::string& matrixFilePath, const std::string& blackList, const std::string& inputFastaFile, const std::string& queryFileName, uint8_t kMerSize, int minScore, uint8_t threads, bool minimiser, uint8_t windowSize, uint64_t numberOfHashFunctionsIn, uint64_t splitSize, const std::string& outputFile, double threshold);
         
+        /*
+         * @fn screening
+         * @brief function for database screening.
+		 * @signature void screening(const std::string& inputFastaFile, const std::string& outputScreen, uint8_t kMerSize, double threshold); 
+         * @param inputFastaFile input reference file.
+         * @param outputScreen output screening fasta file.
+         * @param kMerSize k_mer size.
+         * @param threshold assignment threshold.
+		 * @throws std::runtime_error.
+		 * @return None.
+         */
+        void screening(const std::string& inputFastaFile, const std::string& outputScreen, uint8_t kMerSize, double threshold);
+
 	// Protected member variables and methods:
 	protected:
 

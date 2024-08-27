@@ -978,7 +978,8 @@ void HIBF::multiIndexing(const std::string& matrixFilePath, const std::string& b
                 {
                     bits[col] += resultsVector[row][col];
                 }
-                assignedPeptides << (headers[col]) << " | " << static_cast<double>(bits[col]) << "/" << numberOfPeptides << " (" << (static_cast<double>(bits[col])/numberOfPeptides)*100 << " %) \n";
+                //assignedPeptides << (headers[col]) << " | " << static_cast<double>(bits[col]) << "/" << numberOfPeptides << " (" << (static_cast<double>(bits[col])/numberOfPeptides)*100 << " %) \n";
+                assignedPeptides << (headers[col]) << "\t" << static_cast<double>(bits[col]) << "\t" << numberOfPeptides << "\t" << (static_cast<double>(bits[col])/numberOfPeptides)*100 << " %) \n";
             }
 
             seqan3::debug_stream << "[INFO] Writing results vector to file: " << outputFile << '\n';
@@ -990,5 +991,11 @@ void HIBF::multiIndexing(const std::string& matrixFilePath, const std::string& b
     }
     seqan3::debug_stream << "[INFO] Maximum IBF Size: " << this->maxIBFSize << " GBytes" << std::endl;
     seqan3::debug_stream << "[INFO] Total number of detected outliers: " <<numberOfOutliers << std::endl;
+
+}
+
+//Definition of the function HIBF::screening
+void HIBF::screening(const std::string& inputFastaFile, const std::string& outputScreen, uint8_t kMerSize, double threshold){
+
 
 }
