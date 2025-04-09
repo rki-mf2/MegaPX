@@ -1,4 +1,16 @@
-# MegaPX: Fast Peptide Assignment Method Using Index Databases with Various Counting Algorithms
+## MegaPX: Fast Peptide Assignment Method Using Index Databases with Various Counting Algorithms
+
+<p align="center">
+<img src="img/logo_1.png" width=40%>
+<p>
+<div align="center">
+
+[![bioRxiv](https://img.shields.io/badge/biorxiv-X1X2X3X4.Y1Y2Y3Y4Y5-b31b1b)](https://biorxiv.org/X1X2X3X4.Y1Y2Y3Y4Y5)&nbsp;
+[![code](https://img.shields.io/badge/code-MegaPX-blue)](https://github.com/lutfia95/MegaPX)&nbsp;
+
+</div>
+
+
 
 <!-- ## Citation  -->
 
@@ -11,16 +23,17 @@
 * [Parameters](#parameters )
 
 ## <a name="description"></a>Description
-MegaPX is designed to mutate protein databases, enabling users to search for de novo peptides in both the original and mutated versions. The tool employs a k-mer-based search, providing rapid and highly accurate peptide assignment capability. Beyond this primary function, the tool has numerous other use cases, including metaproteomics classification, virus assignment, and peptide classification.   
-MegaPX utilizes four distinct counting algorithms: [IBF](https://github.com/seqan/hibf/), [HBF](https://github.com/seqan/hibf/), [FM-Index](https://github.com/seqan/seqan3), and binary search. As we assessed these four algorithms in terms of runtime and performance, it became imperative to incorporate them into a single tool, allowing users the freedom to choose based on their specific use case. Mutation generation relies on a substitution matrix containing values proportional to the likelihood of amino acid `i` mutating into amino acid `j` across all possible pairs of amino acids. Each reference amino acid sequence undergoes k-merization, and mutated k-mers are generated based on the user-defined score, which is the sum of k-mer alignment scores. The tool is designed in step commands, which will be included as rules in the Snakemake pipeline. 
+MegaPX is designed to mutate protein databases, enabling users to search for de novo peptides in both the original and mutated versions. The tool employs a _k_-mer-based search, providing rapid and highly accurate peptide assignment capability. Beyond this primary function, the tool has numerous other use cases, including metaproteomics classification, virus assignment, and peptide classification.   
+MegaPX utilizes four distinct counting algorithms: [IBF](https://github.com/seqan/hibf/), [HBF](https://github.com/seqan/hibf/), [FM-Index](https://github.com/seqan/seqan3), and binary search. As we assessed these four algorithms in terms of runtime and performance, it became imperative to incorporate them into a single tool, allowing users the freedom to choose based on their specific use case. Mutation generation relies on a substitution matrix containing values proportional to the likelihood of amino acid `i` mutating into amino acid `j` across all possible pairs of amino acids. Each reference amino acid sequence undergoes _k_-merization, and mutated _k_-mers are generated based on the user-defined score, which is the sum of _k_-mer alignment scores. The tool is designed in step commands, which will be included as rules in the Snakemake pipeline. 
 ## <a name="installation"></a>Installation   
-MegaPX runs only under Linux x86_64; we recommend the Conda installations for all dependencies by:   
+MegaPX runs only under Linux x86_64; we tested the installation under WSL 2 (Windows Subsystem for Linux) and worked without any issues. We recommend the Conda installations for all dependencies by:   
 ```
 conda create --name MegaPX_env OR  conda create --prefix path/to/MegaPX_env  
 conda activate MegaPX_env  OR conda activate path/to/MegaPX_env     
 conda install -c conda-forge cxx-compiler   
 conda install conda-forge::gcc  
 conda install conda-forge::clang
+conda install -c conda-forge zlib
 ```
 Building MegaPX from source:   
 ```
@@ -28,10 +41,11 @@ git clone https://github.com/lutfia95/MegaPX.git
 cd MegaPX  
 mkdir build && cd build   
 cmake ../src   
-make
+make    
 ```
 The executable will be built in `path/to/MegaPX/build/main/`   
-Users can also download the binary pre-built version: [Linux x86_64](https://github.com/lutfia95/MegaPX/releases/download/v.0.0.0/MegaPX-0.0.0-Linux_x64.tar.gz)
+Users can also download the binary pre-built version: [Linux x86_64](https://github.com/lutfia95/MegaPX/releases/download/v.0.5.4/megapx-Linux_x64.tar.gz).    
+Run: `tar -xzvf megapx-Linux_x64.tar.gz`    
 ## <a name="commands"></a>Commands  
 |Subcommand                                                                |Description                                                     |
 |:-------------------------------------------------------------------------|:---------------------------------------------------------------|
@@ -51,7 +65,31 @@ Users can also download the binary pre-built version: [Linux x86_64](https://git
 |[**count_fm**](#count_fm)                                                 |Count query peptide sequences into pre-built FM index           |
 |[**evaluate**](#evaluate)                                                 |Run results evaluation and generate assignment report           |
 |[**classification**](#classification)                                     |Normalize sequences on species level (used for refSeqViral)     |
+|[**multi_indexing**](#multi_indexing)                                     |Run multi-indexing search, builds set of IBFs for the input     |
 
+### Mulit-Indexing 
+MegaPX has different use cases, we highly recommend using directly the `multi_indexing` command, as the tool builds set of IBFs and searchs the target queries faster than other commands. 
+User parameters: 
+```
+-m Path to input matrix.
+-b Path to blacklist file.
+-i Input fasta file (reference).
+-f Query file name.
+-q _k_-mer size.
+-s Minimum mutation score.
+-t Number of building threads.
+-Z Use minimizer in one level (bool value).
+-w Window size is for minimizer computation and is valid only with -Z true.
+-a Number of hash functions.
+-M Maximum number of user bins in each filter.
+-F Results file name.
+-D Mapping threshold is used to assign a query as part of the sequence.
+
+```
+Example use case: 
+```
+./megapx multi_indexing -m blosum62 -b black_list.txt -i refSeqViral_monkeypox.fasta -f monkeypox_sample/E02292_MonkeyPox_SP3_DDA_1.fasta -q 5 -s 100 -t 40 -Z 0 -a 2 -M 1000 -F monckey.log -D 0.8
+```
 ### <a name="stat"></a>MegaPX stat
 Print reference statistics by generating mapping and length files. The last evaluation step uses the mapping file to map each assignment score to the target reference name. 
 ```
@@ -86,7 +124,7 @@ Simulate peptides from the given reference database and error rate. The number o
 
 ### <a name="build_vect"></a>MegaPX build_vect
 For counting peptides into index, we recommend directly using multi-indexing command. 
-Build first serialized index containing k_mer hashes `uint64_t`. The output is written to `path/to/output_dir/hashes_vect_q_s.vect` where `q`is the k-mer size and `s`is the user-definied minimum mutation score. 
+Build first serialized index containing k_mer hashes `uint64_t`. The output is written to `path/to/output_dir/hashes_vect_q_s.vect` where `q`is the _k_-mer size and `s`is the user-definied minimum mutation score. 
 
 ```
 ./megapx build_vect -i path/to/file.fasta -m path/to/blosum62  -t threads -s min_mutation_score -q kmer_size -o path/to/output_dir -w window_size -Z bool_minimiser
@@ -172,41 +210,23 @@ IBF classification of a set of peptides against reference database using differe
 ./megapx classification -V path/to/output_dir/evaluation_results.log -T path/to/output_dir/classification_report.txt 
 ```
 
-### Mulit-Indexing 
-User parameters: 
-```
--m Path to input matrix.
--b Path to blacklist file.
--i Input fasta file (reference).
--f Query file name.
--q K-mer size.
--s Minimum mutation score.
--t Number of building threads.
--Z Use minimizer in one level (bool value).
--w Window size is for minimizer computation and is valid only with -Z true.
--a Number of hash functions.
--M Maximum number of user bins in each filter.
--F Results file name.
--D Mapping threshold is used to assign a query as part of the sequence.
-
-```
-Example use case: 
-```
-./megapx multi_indexing -m blosum62 -b black_list.txt -i refSeqViral_monkeypox.fasta -f monkeypox_sample/E02292_MonkeyPox_SP3_DDA_1.fasta -q 5 -s 100 -t 40 -Z 0 -a 2 -M 1000 -F monckey.log -D 0.8
-```
-
-
 ## <a name="parameters "></a>Parameters  
 ```
+MegaPX - MegaPX builds and counts mutations from and in datasets with the classification of unknown samples.
+============================================================================================================
+
+SYNOPSIS
+    [build_vect, build_ibf, count_ibf, build_hibf, count_hibf, binary_search, build_fm, count_fm, counting, stat,
+    mutate_stat, evaluate, hibf_ref, classification, ibf_stat, write_db, mutate_seq_len, simulate_peptides, profile,
+    test, multi_indexing] [OPTIONS]
+
 DESCRIPTION
     MegaPX builds and counts mutations from and in datasets with the classification of unknown samples.
 
 POSITIONAL ARGUMENTS
     ARGUMENT-1 (std::string)
-          Modus to run MegaPX: Value must be one of
-          [build_vect, build_ibf, count_ibf, build_hibf, count_hibf, binary_search, build_fm, count_fm, counting, stat,
-            mutate_stat, evaluate, hibf_ref, classification, ibf_stat, write_db, mutate_seq_len, simulate_peptides, profile,
-            test, multi_indexing].
+          Modus to run MegaPX : Value must be one of
+          [build_vect,build_ibf,count_ibf,build_hibf,count_hibf,binary_search,build_fm,count_fm,counting,stat,mutate_stat,evaluate,hibf_ref,classification,ibf_stat,write_db,mutate_seq_len,simulate_peptides,profile,test,multi_indexing].
 
 OPTIONS
 
@@ -284,13 +304,13 @@ OPTIONS
 
 VERSION
     Last update: 2024
-    MegaPX version: 0.0.0
-    SeqAn version: 3.4.0-rc.1
+    MegaPX version: 0.5.4
+    SeqAn version: 3.4.0-rc.4
 
 LEGAL
     Author: Ahmad Lutfi
-    Contact: ahmad.lutfi@fu-berlin.de
-    SeqAn Copyright: 2006-2023 Knut Reinert, FU-Berlin; released under the 3-clause BSDL.
+    Contact: mutht@rki.de & ahmad.lutfi.op@gmail.com
+    SeqAn Copyright: 2006-2025 Knut Reinert, FU-Berlin; released under the 3-clause BSDL.
 ```
 
 
