@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.16)
+cmake_minimum_required (VERSION 3.20...3.31)
 
 project (megapx CXX C)
 
@@ -16,9 +16,16 @@ else()
   set(CMAKE_GENERATORS "Unix Makefiles")
 endif()
 
+include (CheckIPOSupported)
+   check_ipo_supported (RESULT result OUTPUT output LANGUAGES CXX)
+   if (result)
+       set (CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+   endif ()
+
+
 set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_STANDARD 20)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp")
+set(CMAKE_CXX_STANDARD 23)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++23")
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
 
 

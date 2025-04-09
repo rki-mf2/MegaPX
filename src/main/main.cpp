@@ -40,7 +40,7 @@ int main(int argc, char const **argv)
 {
 
 	StopClock megaXUsage;
-
+/*
 	if (__cplusplus != 202002L) {
         std::cerr << "[INFO-DEV] MegaPX supports only C++20, your version is: " << __cplusplus << std::endl;
         return 1;
@@ -50,6 +50,7 @@ int main(int argc, char const **argv)
 
 		std::cout << "MegaPX passed C++20 version check! your version is: " << __cplusplus << std::endl;
 	}
+*/
 
 	seqan3::argument_parser MegaXParser("MegaPX", argc, argv);
 	CmdArguments args { };

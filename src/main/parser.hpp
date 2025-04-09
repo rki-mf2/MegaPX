@@ -77,8 +77,6 @@ struct CmdArguments
     /// General params struct
 	std::string sequenceFilePath
     {""};
-	std::string outputScreen
-    {""};
 	std::string matrixFilePath
     {""}; 
 	std::string mode
@@ -155,9 +153,9 @@ void initializeMainArgumentParser(argument_parser &MegaXParser, CmdArguments &ar
 {
 	MegaXParser.info.author = "Ahmad Lutfi";
 	MegaXParser.info.short_description = "MegaPX: protein and sequence level taxonomic classification using mutated databases.";
-	MegaXParser.info.version = "0.0.0";
+	MegaXParser.info.version = "0.5.4";
 	MegaXParser.info.date = "2024";
-	MegaXParser.info.email = "ahmad.lutfi@fu-berlin.de";
+	MegaXParser.info.email = "mutht@rki.de & ahmad.lutfi.op@gmail.com";
 
 	std::vector<std::string> description
 	{ "MegaPX builds and counts mutations from and in datasets with the classification of unknown samples." };
@@ -169,7 +167,7 @@ void initializeMainArgumentParser(argument_parser &MegaXParser, CmdArguments &ar
 
 
 	MegaXParser.add_positional_option(args.mode, "Modus to run MegaPX : ", value_list_validator
-	{ "build_vect", "build_ibf", "count_ibf", "build_hibf", "count_hibf", "binary_search", "build_fm", "count_fm", "counting", "stat", "mutate_stat", "evaluate", "hibf_ref", "classification", "ibf_stat", "write_db", "mutate_seq_len", "simulate_peptides", "profile", "test", "multi_indexing", "screening"});
+	{ "build_vect", "build_ibf", "count_ibf", "build_hibf", "count_hibf", "binary_search", "build_fm", "count_fm", "counting", "stat", "mutate_stat", "evaluate", "hibf_ref", "classification", "ibf_stat", "write_db", "mutate_seq_len", "simulate_peptides", "profile", "test", "multi_indexing"});
 
 }
 
@@ -187,16 +185,15 @@ void initializeArgumentParser(argument_parser &MegaXParser, CmdArguments &args)
 {
 	MegaXParser.info.author = "Ahmad Lutfi";
 	MegaXParser.info.short_description = "MegaPX builds and counts mutations from and in datasets with the classification of unknown samples.";
-	MegaXParser.info.version = "0.0.0";
+	MegaXParser.info.version = "0.5.4";
 	MegaXParser.info.date = "2024";
-	MegaXParser.info.email = "ahmad.lutfi@fu-berlin.de";
+	MegaXParser.info.email = "mutht@rki.de & ahmad.lutfi.op@gmail.com";
 
     /// Mutations params
 	MegaXParser.add_option(args.numberOfThreads, 't', "Threads", "Number of input threads.");
 	MegaXParser.add_option(args.minScore, 's', "Score", "MinimumScore for each mutation.");
 	MegaXParser.add_option(args.qMerSize, 'q', "QMerSize", "QMerSize for each k-mer.");
 	MegaXParser.add_option(args.sequenceFilePath, 'i', "InputFasta", "Input fasta file");
-	MegaXParser.add_option(args.sequenceFilePath, 'G', "outputScreen", "Output screen fasta file");
 	MegaXParser.add_option(args.matrixFilePath, 'm', "Matrix", "Path to input matrix");
 	MegaXParser.add_option(args.outputDir, 'o', "outputDir", "Output directory for writing logs");
 	MegaXParser.add_option(args.minimiser, 'Z', "minimiser", "Use minimiser in one level.");
@@ -468,13 +465,6 @@ void runProgram(CmdArguments &args)
 		MultiIndexingObj.multiIndexing(args.matrixFilePath, args.blackListFile, args.sequenceFilePath, args.queryFileName, args.qMerSize, args.minScore,
 		 args.numberOfThreads, args.minimiser, args.windowSize, args.numberOfHashFunctions, args.maxUserBins, args.filterFileName, args.threshold);
     }
-	// ./megaX multi_indexing -i refSeqViral_monkeypox.fasta -g seq.fasta -q 5 -D 0.9
-	else if (std::string("screening").compare(args.mode) == 0)
-	{
-		HIBF MultiIndexingObj;
-		MultiIndexingObj.screening(args.sequenceFilePath, args.outputScreen, args.qMerSize, args.threshold);
-    }
-    
     
 }
 

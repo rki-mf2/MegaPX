@@ -1,6 +1,7 @@
 set (seqan3_git_tag "main")
  
 message (STATUS "Fetching SeqAn3 ${seqan3_git_tag}:")
+
  
 include (FetchContent)
 FetchContent_Declare (
@@ -13,7 +14,7 @@ FetchContent_MakeAvailable (seqan3_fetch_content)
 
 FetchContent_Declare (
     hibf_fetch_content
-    GIT_REPOSITORY "https://github.com/seqan/hibf"
+    GIT_REPOSITORY "https://github.com/seqan/hibf.git"
     GIT_TAG "main")
 option (INSTALL_HIBF "" OFF)
 FetchContent_MakeAvailable (hibf_fetch_content)
