@@ -6,7 +6,7 @@
 <div align="center">
 
 [![bioRxiv](https://img.shields.io/badge/biorxiv-X1X2X3X4.Y1Y2Y3Y4Y5-b31b1b)](https://biorxiv.org/X1X2X3X4.Y1Y2Y3Y4Y5)&nbsp;
-[![code](https://img.shields.io/badge/code-MegaPX-blue)](https://github.com/lutfia95/MegaPX)&nbsp;
+[![code](https://img.shields.io/badge/code-MegaPX-blue)](https://github.com/rki-mf2/MegaPX)&nbsp;
 
 </div>
 
@@ -37,14 +37,14 @@ conda install -c conda-forge zlib
 ```
 Building MegaPX from source:   
 ```
-git clone https://github.com/lutfia95/MegaPX.git   
+git clone https://github.com/rki-mf2/MegaPX.git   
 cd MegaPX  
 mkdir build && cd build   
 cmake ../src   
 make    
 ```
 The executable will be built in `path/to/MegaPX/build/main/`   
-Users can also download the binary pre-built version: [Linux x86_64](https://github.com/lutfia95/MegaPX/releases/download/v.0.5.4/megapx-Linux_x64.tar.gz).    
+Users can also download the binary pre-built version: [Linux x86_64](https://github.com/rki-mf2ls/MegaPX/releases/download/v.0.5.4/megapx-Linux_x64.tar.gz).    
 Run: `tar -xzvf megapx-Linux_x64.tar.gz`    
 ## <a name="commands"></a>Commands  
 |Subcommand                                                                |Description                                                     |
