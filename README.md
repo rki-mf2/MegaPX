@@ -12,7 +12,10 @@
 
 
 
-<!-- ## Citation  -->
+## Citation
+
+Lutfi, A., Holstein, T., Andreotti, S., & Muth, T. (2025). MegaPX: fast and space-efficient peptide assignment method using IBF-based multi-indexing. *bioRxiv*. https://doi.org/10.1101/2025.04.14.648734
+
 
 ## Table of contents
 
