@@ -19,6 +19,7 @@
 #include <omp.h>
 #include <filesystem>
 #include <bitset>
+#include <numeric>
 
 //==================================================================
 // Forwards
@@ -158,6 +159,8 @@ class HIBF
 		 * @signature bool disableEstimationRatio = false;
          */
         bool disableEstimationRatio = false;
+
+        uint8_t droppedLength {1u};
 
         /*
          * @var disableRearrangement
@@ -301,7 +304,7 @@ class HIBF
 		 * @throws std::runtime_error.
 		 * @return None.
          */
-        void multiIndexing(const std::string& matrixFilePath, const std::string& blackList, const std::string& inputFastaFile, const std::string& queryFileName, uint8_t kMerSize, int minScore, uint8_t threads, bool minimiser, uint8_t windowSize, uint64_t numberOfHashFunctionsIn, uint64_t splitSize, const std::string& outputFile, double threshold);
+        void multiIndexing(const std::string& matrixFilePath, const std::string& blackList, const std::string& inputFastaFile, const std::string& queryFileName, uint8_t kMerSize, int minScore, uint8_t threads, bool minimiser, uint8_t windowSize, uint64_t numberOfHashFunctionsIn, uint64_t splitSize, const std::string& outputFile, double threshold, uint8_t droppedLength);
         
 	// Protected member variables and methods:
 	protected:

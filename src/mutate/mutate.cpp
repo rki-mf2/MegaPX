@@ -6,7 +6,7 @@
 
 #include <cmath>
 #include <regex>
-#include <zlib.h>
+//#include <zlib.h>
 #include <omp.h>
 #include <cstdint>
 #include <stdexcept>

@@ -246,7 +246,6 @@ void HIBF::countIBF(const std::string& IBFFileName, const std::string& queryFile
     //if (!logFile.is_open()) 
      // throw std::runtime_error("[ERROR] Couldn't open the file: " + resultsFile.string());
     
-    seqan3::debug_stream << "[INFO] Number of skipped sequences (size < k): " << skippedQueries << '\n';
     seqan3::debug_stream << "[INFO] Start writing results to the output file: " << resultsFile.string() << '\n';
 
     std::ofstream  outputLog(resultsFile.string() , std::ios::binary); 
@@ -819,9 +818,11 @@ void HIBF::countHIBF(const std::string& HIBFFileName, const std::string& queryFi
 
 }
 
+
 //Definition of the function HIBF::multiIndexing
 void HIBF::multiIndexing(const std::string& matrixFilePath, const std::string& blackList, const std::string& inputFastaFile, const std::string& queryFileName, uint8_t kMerSize,
-                         int minScore, uint8_t threads, bool minimiser, uint8_t windowSize, uint64_t numberOfHashFunctionsIn, uint64_t splitSize, const std::string& outputFile, double threshold)
+                         int minScore, uint8_t threads, bool minimiser, uint8_t windowSize, uint64_t numberOfHashFunctionsIn, uint64_t splitSize, const std::string& outputFile,
+                         double threshold, uint8_t droppedLength)
 {
 
     seqan3::debug_stream << "[INFO] Loading blacklist file..." << '\n';
@@ -864,12 +865,15 @@ void HIBF::multiIndexing(const std::string& matrixFilePath, const std::string& b
 
     std::ofstream assignedPeptides;
     assignedPeptides.open(outputFile);
+    std::vector<int> totalQueryHits(numberOfQueries, 0);
+    std::ofstream querySummaryFile(outputFile + "_query_summary.tsv");
+    querySummaryFile << "query_index\tn_hit_references\n";
 
     for (auto & record : fin)
     {
 
         auto const & seq = record.sequence();
-        if(seq.size() < kMerSize){
+        if(seq.size() < (kMerSize + droppedLength)){
                 skippedQueries++;
                 continue;
         }
@@ -964,6 +968,12 @@ void HIBF::multiIndexing(const std::string& matrixFilePath, const std::string& b
 
             std::vector<int> bits(currentInsertedSequences, 0);
             auto numberOfPeptides = resultsVector.size();
+            // === Accumulate per-query hit counts across all IBFs ===
+            for (size_t q = 0; q < resultsVector.size(); ++q)
+            {
+                int hitCount = std::accumulate(resultsVector[q].begin(), resultsVector[q].end(), 0);
+                totalQueryHits[q] += hitCount; // accumulate global hits
+            }
 
             // Checkpoint 1
             if (currentInsertedSequences > resultsVector[0].size() || currentInsertedSequences > headers.size()) {
@@ -978,7 +988,8 @@ void HIBF::multiIndexing(const std::string& matrixFilePath, const std::string& b
                 {
                     bits[col] += resultsVector[row][col];
                 }
-                assignedPeptides << (headers[col]) << " | " << static_cast<double>(bits[col]) << "/" << numberOfPeptides << " (" << (static_cast<double>(bits[col])/numberOfPeptides)*100 << " %) \n";
+                assignedPeptides << (headers[col]) << " \t " << static_cast<double>(bits[col]) << "\t" << numberOfPeptides << "\t" << (static_cast<double>(bits[col])/numberOfPeptides)*100 << "\n";
+                //assignedPeptides << (headers[col]) << " | " << static_cast<double>(bits[col]) << "/" << numberOfPeptides << " (" << (static_cast<double>(bits[col])/numberOfPeptides)*100 << " %) \n";
             }
 
             seqan3::debug_stream << "[INFO] Writing results vector to file: " << outputFile << '\n';
@@ -988,7 +999,18 @@ void HIBF::multiIndexing(const std::string& matrixFilePath, const std::string& b
         }
         
     }
+    // === After all IBFs processed: write cumulative query summary ===
+    int totalUniqueQueries = 0;
+    for (size_t q = 0; q < totalQueryHits.size(); ++q)
+    {
+        querySummaryFile << q << '\t' << totalQueryHits[q] << '\n';
+        if (totalQueryHits[q] == 1)
+            totalUniqueQueries++;
+    }
+    seqan3::debug_stream << "[INFO] Total unique queries across all IBFs: " << totalUniqueQueries << '\n';
+    querySummaryFile.close();
     seqan3::debug_stream << "[INFO] Maximum IBF Size: " << this->maxIBFSize << " GBytes" << std::endl;
     seqan3::debug_stream << "[INFO] Total number of detected outliers: " <<numberOfOutliers << std::endl;
+    seqan3::debug_stream << "[INFO] Number of skipped sequences (size < k): " << skippedQueries << '\n';
 
 }

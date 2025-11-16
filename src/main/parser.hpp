@@ -93,6 +93,7 @@ struct CmdArguments
 	{""};
 
 	double threshold {0.75};
+	uint8_t droppedLength {1u};
 
 	
 };
@@ -116,8 +117,7 @@ struct HIBFParams
 	bool disableEstimationRatio = false;
 	bool disableRearrangement = false;
 	std::string vectFileName {""};
-    std::string filterFileName {""};
-	
+    std::string filterFileName {""};	
 };
 
 /*
@@ -171,7 +171,6 @@ void initializeMainArgumentParser(argument_parser &MegaXParser, CmdArguments &ar
 
 }
 
-
 /*
  * @fn initializeArgumentParser
  * @brief get user defined arguments.
@@ -183,10 +182,10 @@ void initializeMainArgumentParser(argument_parser &MegaXParser, CmdArguments &ar
  */
 void initializeArgumentParser(argument_parser &MegaXParser, CmdArguments &args)
 {
-	MegaXParser.info.author = "Ahmad Lutfi";
+	MegaXParser.info.author = "Ahmad Lutfi & Thilo Muth";
 	MegaXParser.info.short_description = "MegaPX builds and counts mutations from and in datasets with the classification of unknown samples.";
-	MegaXParser.info.version = "0.5.4";
-	MegaXParser.info.date = "2024";
+	MegaXParser.info.version = "1.0.0";
+	MegaXParser.info.date = "2025";
 	MegaXParser.info.email = "mutht@rki.de & ahmad.lutfi.op@gmail.com";
 
     /// Mutations params
@@ -212,6 +211,7 @@ void initializeArgumentParser(argument_parser &MegaXParser, CmdArguments &args)
 	MegaXParser.add_option(args.hibfThreshold, 'd', "hibfThreshold", "Threshold to assign query to user bin.");
 	MegaXParser.add_option(args.filterFileName, 'F', "filterFileName", "HIBF output file name.");
 	MegaXParser.add_option(args.vectFileName, 'v', "vectFileName", "Mutated DB input file name.");
+	MegaXParser.add_option(args.droppedLength, 'x', "droppedLength", "Length of peptide before dropping (L = K + x).");
 
 	/// FM Index params
 	MegaXParser.add_option(args.indexFileName, 'X', "indexFileName", "Output index file name.");
@@ -463,7 +463,7 @@ void runProgram(CmdArguments &args)
 	{
 		HIBF MultiIndexingObj;
 		MultiIndexingObj.multiIndexing(args.matrixFilePath, args.blackListFile, args.sequenceFilePath, args.queryFileName, args.qMerSize, args.minScore,
-		 args.numberOfThreads, args.minimiser, args.windowSize, args.numberOfHashFunctions, args.maxUserBins, args.filterFileName, args.threshold);
+		 args.numberOfThreads, args.minimiser, args.windowSize, args.numberOfHashFunctions, args.maxUserBins, args.filterFileName, args.threshold, args.droppedLength);
     }
     
 }

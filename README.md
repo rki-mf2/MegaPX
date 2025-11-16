@@ -5,17 +5,14 @@
 <p>
 <div align="center">
 
-[![bioRxiv](https://img.shields.io/badge/biorxiv-2025.04.14.648734-b31b1b)](https://www.biorxiv.org/content/10.1101/2025.04.14.648734v1)
-[![code](https://img.shields.io/badge/code-MegaPX-blue)](https://github.com/rki-mf2/MegaPX)&nbsp;
+[![bioRxiv](https://img.shields.io/badge/biorxiv-X1X2X3X4.Y1Y2Y3Y4Y5-b31b1b)](https://biorxiv.org/X1X2X3X4.Y1Y2Y3Y4Y5)&nbsp;
+[![code](https://img.shields.io/badge/code-MegaPX-blue)](https://github.com/lutfia95/MegaPX)&nbsp;
 
 </div>
 
 
 
-## Citation
-
-Lutfi, A., Holstein, T., Andreotti, S., & Muth, T. (2025). MegaPX: fast and space-efficient peptide assignment method using IBF-based multi-indexing. *bioRxiv*. https://doi.org/10.1101/2025.04.14.648734
-
+<!-- ## Citation  -->
 
 ## Table of contents
 
@@ -40,14 +37,14 @@ conda install -c conda-forge zlib
 ```
 Building MegaPX from source:   
 ```
-git clone https://github.com/rki-mf2/MegaPX.git   
+git clone https://github.com/lutfia95/MegaPX.git   
 cd MegaPX  
 mkdir build && cd build   
 cmake ../src   
 make    
 ```
 The executable will be built in `path/to/MegaPX/build/main/`   
-Users can also download the binary pre-built version: [Linux x86_64](https://github.com/rki-mf2ls/MegaPX/releases/download/v.0.5.4/megapx-Linux_x64.tar.gz).    
+Users can also download the binary pre-built version: [Linux x86_64](https://github.com/lutfia95/MegaPX/releases/download/v.0.5.4/megapx-Linux_x64.tar.gz).    
 Run: `tar -xzvf megapx-Linux_x64.tar.gz`    
 ## <a name="commands"></a>Commands  
 |Subcommand                                                                |Description                                                     |
@@ -70,15 +67,24 @@ Run: `tar -xzvf megapx-Linux_x64.tar.gz`
 |[**classification**](#classification)                                     |Normalize sequences on species level (used for refSeqViral)     |
 |[**multi_indexing**](#multi_indexing)                                     |Run multi-indexing search, builds set of IBFs for the input     |
 
+<<<<<<< HEAD
+### Mulit-Indexing
+If running the easy-assignment of peptides without any other algorithm, we recommend using `multi_indexing`
+=======
 ### Mulit-Indexing 
 MegaPX has different use cases, we highly recommend using directly the `multi_indexing` command, as the tool builds set of IBFs and searchs the target queries faster than other commands. 
+>>>>>>> 666f293b4464ce9d581c7d5a46398c0138858692
 User parameters: 
 ```
 -m Path to input matrix.
 -b Path to blacklist file.
 -i Input fasta file (reference).
 -f Query file name.
+<<<<<<< HEAD
+-q K-mer size.
+=======
 -q _k_-mer size.
+>>>>>>> 666f293b4464ce9d581c7d5a46398c0138858692
 -s Minimum mutation score.
 -t Number of building threads.
 -Z Use minimizer in one level (bool value).
@@ -87,12 +93,22 @@ User parameters:
 -M Maximum number of user bins in each filter.
 -F Results file name.
 -D Mapping threshold is used to assign a query as part of the sequence.
+<<<<<<< HEAD
+-x Length of peptide before dropping (L = K + x). Default: 1.
+=======
+>>>>>>> 666f293b4464ce9d581c7d5a46398c0138858692
 
 ```
 Example use case: 
 ```
+<<<<<<< HEAD
+./megapx multi_indexing -m blosum62 -b blacklist.txt -i input_references.fasta -f input_peptides.fasta -q 5 -s 100 -t 15 -Z 0 -a 2 -M 1000 -F output.log -D 0.85
+```
+
+=======
 ./megapx multi_indexing -m blosum62 -b black_list.txt -i refSeqViral_monkeypox.fasta -f monkeypox_sample/E02292_MonkeyPox_SP3_DDA_1.fasta -q 5 -s 100 -t 40 -Z 0 -a 2 -M 1000 -F monckey.log -D 0.8
 ```
+>>>>>>> 666f293b4464ce9d581c7d5a46398c0138858692
 ### <a name="stat"></a>MegaPX stat
 Print reference statistics by generating mapping and length files. The last evaluation step uses the mapping file to map each assignment score to the target reference name. 
 ```
@@ -213,6 +229,10 @@ IBF classification of a set of peptides against reference database using differe
 ./megapx classification -V path/to/output_dir/evaluation_results.log -T path/to/output_dir/classification_report.txt 
 ```
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> 666f293b4464ce9d581c7d5a46398c0138858692
 ## <a name="parameters "></a>Parameters  
 ```
 MegaPX - MegaPX builds and counts mutations from and in datasets with the classification of unknown samples.
