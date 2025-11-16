@@ -286,6 +286,8 @@ OPTIONS
           HIBF output file name. Default: .
     -v, --vectFileName (std::string)
           Mutated DB input file name. Default: .
+    -x, --droppedLength (unsigned 8 bit integer)
+          Length of peptide before dropping (L = K + x). Default: 1.
     -X, --indexFileName (std::string)
           Output index file name. Default: .
     -n, --numberOfReferenceSequences (unsigned 64 bit integer)
