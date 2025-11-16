@@ -90,12 +90,9 @@ User parameters:
 ```
 Example use case: 
 ```
-./megapx multi_indexing -m blosum62 -b blacklist.txt -i input_references.fasta -f input_peptides.fasta -q 5 -s 100 -t 15 -Z 0 -a 2 -M 1000 -F output.log -D 0.85
+./megapx multi_indexing -m blosum62 -b blacklist.txt -i input_references.fasta -f input_peptides.fasta -q 5 -s 100 -t 15 -Z 0 -a 2 -M 1000 -F output.log -D 0.85 -x 0
 ```
 
-=======
-./megapx multi_indexing -m blosum62 -b black_list.txt -i refSeqViral_monkeypox.fasta -f monkeypox_sample/E02292_MonkeyPox_SP3_DDA_1.fasta -q 5 -s 100 -t 40 -Z 0 -a 2 -M 1000 -F monckey.log -D 0.8
-```
 ### <a name="stat"></a>MegaPX stat
 Print reference statistics by generating mapping and length files. The last evaluation step uses the mapping file to map each assignment score to the target reference name. 
 ```
