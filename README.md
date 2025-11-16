@@ -213,10 +213,6 @@ IBF classification of a set of peptides against reference database using differe
 ./megapx classification -V path/to/output_dir/evaluation_results.log -T path/to/output_dir/classification_report.txt 
 ```
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 666f293b4464ce9d581c7d5a46398c0138858692
 ## <a name="parameters "></a>Parameters  
 ```
 MegaPX - MegaPX builds and counts mutations from and in datasets with the classification of unknown samples.
