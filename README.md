@@ -5,7 +5,7 @@
 <p>
 <div align="center">
 
-[![bioRxiv](https://img.shields.io/badge/biorxiv-X1X2X3X4.Y1Y2Y3Y4Y5-b31b1b)](https://biorxiv.org/X1X2X3X4.Y1Y2Y3Y4Y5)&nbsp;
+[![bioRxiv](https://img.shields.io/badge/biorxiv-2025.04.14.648734v1-b31b1b)](https://www.biorxiv.org/content/10.1101/2025.04.14.648734v1)&nbsp;
 [![code](https://img.shields.io/badge/code-MegaPX-blue)](https://github.com/lutfia95/MegaPX)&nbsp;
 
 </div>
