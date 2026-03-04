@@ -1,0 +1,5 @@
+add_executable(megapx_tests test_main.cpp)
+target_compile_features(megapx_tests PRIVATE cxx_std_23)
+target_compile_definitions(megapx_tests PRIVATE MEGAPX_REPO_DIR="${CMAKE_SOURCE_DIR}/..")
+target_link_libraries(megapx_tests PRIVATE mutate seqan3::seqan3 hibf_seqan fm_index_mx)
+add_test(NAME megapx_tests COMMAND megapx_tests)

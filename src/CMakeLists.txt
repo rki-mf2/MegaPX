@@ -25,7 +25,7 @@ include (CheckIPOSupported)
 
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_STANDARD 23)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++23")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++23")
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
 
 
@@ -43,3 +43,6 @@ add_subdirectory(main)
 add_subdirectory(mutate)
 add_subdirectory(hibf)
 add_subdirectory(fm_index_mx)
+
+enable_testing()
+add_subdirectory(test)
