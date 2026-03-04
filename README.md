@@ -18,6 +18,7 @@
 
 * [Description](#description)
 * [Installation](#installation)
+* [Tests](#tests)
 * [Commands](#commands)
 * [Use-cases](#use-cases)
 * [Parameters](#parameters )
@@ -46,6 +47,19 @@ make
 The executable will be built in `path/to/MegaPX/build/main/`   
 Users can also download the binary pre-built version: [Linux x86_64](https://github.com/lutfia95/MegaPX/releases/download/v.0.5.4/megapx-Linux_x64.tar.gz).    
 Run: `tar -xzvf megapx-Linux_x64.tar.gz`    
+## <a name="tests"></a>Tests
+Build the test target and run the full test suite with CTest from the build directory:
+```
+mkdir -p build
+cd build
+cmake ../src
+cmake --build . --target megapx_tests
+ctest --output-on-failure
+```
+If you want to run only the MegaPX unit test binary directly:
+```
+./test/megapx_tests
+```
 ## <a name="commands"></a>Commands  
 |Subcommand                                                                |Description                                                     |
 |:-------------------------------------------------------------------------|:---------------------------------------------------------------|
@@ -67,8 +81,8 @@ Run: `tar -xzvf megapx-Linux_x64.tar.gz`
 |[**classification**](#classification)                                     |Normalize sequences on species level (used for refSeqViral)     |
 |[**multi_indexing**](#multi_indexing)                                     |Run multi-indexing search, builds set of IBFs for the input     |
 
-### Mulit-Indexing 
-MegaPX has different use cases, we highly recommend using directly the `multi_indexing` command, as the tool builds set of IBFs and searchs the target queries faster than other commands. 
+### Mulit-Indexing
+If running the easy-assignment of peptides without any other algorithm, we recommend using `multi_indexing`
 User parameters: 
 ```
 -m Path to input matrix.
@@ -76,7 +90,6 @@ User parameters:
 -i Input fasta file (reference).
 -f Query file name.
 -q K-mer size.
--q _k_-mer size.
 -s Minimum mutation score.
 -t Number of building threads.
 -Z Use minimizer in one level (bool value).
@@ -90,9 +103,8 @@ User parameters:
 ```
 Example use case: 
 ```
-./megapx multi_indexing -m blosum62 -b blacklist.txt -i input_references.fasta -f input_peptides.fasta -q 5 -s 100 -t 15 -Z 0 -a 2 -M 1000 -F output.log -D 0.85 -x 0
+./megapx multi_indexing -m blosum62 -b blacklist.txt -i input_references.fasta -f input_peptides.fasta -q 5 -s 100 -t 15 -Z 0 -a 2 -M 1000 -F output.log -D 0.85
 ```
-
 ### <a name="stat"></a>MegaPX stat
 Print reference statistics by generating mapping and length files. The last evaluation step uses the mapping file to map each assignment score to the target reference name. 
 ```
@@ -286,8 +298,6 @@ OPTIONS
           HIBF output file name. Default: .
     -v, --vectFileName (std::string)
           Mutated DB input file name. Default: .
-    -x, --droppedLength (unsigned 8 bit integer)
-          Length of peptide before dropping (L = K + x). Default: 1.
     -X, --indexFileName (std::string)
           Output index file name. Default: .
     -n, --numberOfReferenceSequences (unsigned 64 bit integer)
@@ -308,8 +318,8 @@ OPTIONS
           Path to black list file. Default: .
 
 VERSION
-    Last update: 2025
-    MegaPX version: 1.0.0
+    Last update: 2024
+    MegaPX version: 0.5.4
     SeqAn version: 3.4.0-rc.4
 
 LEGAL
@@ -317,7 +327,6 @@ LEGAL
     Contact: mutht@rki.de & ahmad.lutfi.op@gmail.com
     SeqAn Copyright: 2006-2025 Knut Reinert, FU-Berlin; released under the 3-clause BSDL.
 ```
-
 
 
 

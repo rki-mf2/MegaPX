@@ -171,6 +171,7 @@ void initializeMainArgumentParser(argument_parser &MegaXParser, CmdArguments &ar
 
 }
 
+
 /*
  * @fn initializeArgumentParser
  * @brief get user defined arguments.
