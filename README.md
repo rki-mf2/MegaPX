@@ -6,6 +6,7 @@
 <div align="center">
 
 [![bioRxiv](https://img.shields.io/badge/biorxiv-2025.04.14.648734v1-b31b1b)](https://www.biorxiv.org/content/10.1101/2025.04.14.648734v1)&nbsp;
+[![Bioinformatics](https://img.shields.io/badge/Bioinformatics-10.1093%2Fbioinformatics%2Fbtag134-blue)](https://doi.org/10.1093/bioinformatics/btag134)
 [![code](https://img.shields.io/badge/code-MegaPX-blue)](https://github.com/lutfia95/MegaPX)&nbsp;
 
 </div>
