@@ -6,6 +6,7 @@ find_package(Torch REQUIRED)
 add_executable(torch_loader
   main.cpp
   CheckpointModelLoader.cpp
+  InferenceParameterInspector.cpp
 )
 target_compile_features(torch_loader PRIVATE cxx_std_20)
 target_compile_options(torch_loader PRIVATE ${TORCH_CXX_FLAGS})

@@ -153,11 +153,12 @@ bool CheckpointModelLoader::load(const std::filesystem::path& checkpoint_path,
   checkpoint_path_ = checkpoint_path;
 
   std::error_code error;
-  file_size_ = std::filesystem::file_size(checkpoint_path_, error);
+  const auto file_size = std::filesystem::file_size(checkpoint_path_, error);
   if (error) {
     last_error_ = "Cannot read checkpoint file size: " + error.message();
     return false;
   }
+  file_size_ = file_size;
 
   try {
     torch::NoGradGuard no_grad;
@@ -197,6 +198,24 @@ const torch::jit::script::Module& CheckpointModelLoader::module() const {
     throw std::logic_error("No TorchScript module has been loaded.");
   }
   return *module_;
+}
+
+bool CheckpointModelLoader::is_python_checkpoint() const {
+  return archive_.is_zip && archive_.has_pickle && !archive_.has_torchscript_code;
+}
+
+const std::vector<std::string>& CheckpointModelLoader::checkpoint_keys() const {
+  return archive_.checkpoint_keys;
+}
+
+const std::vector<std::string>& CheckpointModelLoader::sample_state_dict_names()
+    const {
+  return archive_.sample_tensor_names;
+}
+
+const std::optional<std::string>&
+CheckpointModelLoader::pytorch_lightning_version() const {
+  return archive_.pytorch_lightning_version;
 }
 
 std::string CheckpointModelLoader::summary(const std::size_t max_items) const {

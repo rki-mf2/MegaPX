@@ -36,6 +36,10 @@ class CheckpointModelLoader {
   std::string summary(std::size_t max_items = 12) const;
 
   const torch::jit::script::Module& module() const;
+  bool is_python_checkpoint() const;
+  const std::vector<std::string>& checkpoint_keys() const;
+  const std::vector<std::string>& sample_state_dict_names() const;
+  const std::optional<std::string>& pytorch_lightning_version() const;
 
  private:
   struct ArchiveSummary {

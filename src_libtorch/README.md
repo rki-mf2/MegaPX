@@ -64,6 +64,14 @@ To inspect a checkpoint:
   restore weights, so they cannot be executed directly by LibTorch until
   exported as TorchScript.
 
+`InferenceParameterInspector` then reports the parameters needed for inference:
+
+- For TorchScript models, it reads the `forward` schema and prints required
+  inputs, optional inputs, return types, and runtime tensor requirements.
+- For Python `.ckpt` files, it prints the required conversion/runtime items
+  that are still missing from C++ inference, plus best-effort hints from
+  `state_dict` names.
+
 ## Notes
 
 - `library kineto not found` is a warning emitted by this LibTorch package. It
