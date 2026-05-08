@@ -58,6 +58,32 @@ You can also pass a Cascadia sequence TOML config:
 ./build_libtorch/torch_loader src_libtorch/cascadia_sequence.example.toml
 ```
 
+## Running Inference
+
+LibTorch can only run a TorchScript export, not the original PyTorch-Lightning
+`.ckpt` file. First export the checkpoint from a Python environment with
+Cascadia and PyTorch installed:
+
+```bash
+python src_libtorch/export_cascadia_torchscript.py \
+  --checkpoint model/cascadia.ckpt \
+  --output model/cascadia_sequence.pt
+```
+
+Then update the TOML:
+
+```toml
+[model]
+path = "../model/cascadia_sequence.pt"
+```
+
+Now the same command will read `demo.mzML`, build the Cascadia tensors, run
+greedy sequence decoding, and print the first decoded candidate peptides:
+
+```bash
+./build_libtorch/torch_loader src_libtorch/cascadia_sequence.example.toml
+```
+
 `CheckpointModelLoader` supports two cases:
 
 - TorchScript files saved with `torch.jit.save(...)`: loads the module with
@@ -115,6 +141,39 @@ an exported TorchScript model whose `forward` accepts:
 
 It returns token logits, and optionally the precursor and fragment predictions
 if the TorchScript export returns the same tuple as Python `_forward_step`.
+
+## mzML Input
+
+`CascadiaMzmlReader` reads centroided mzML files like `cascadia/demo.mzML` and
+mirrors the tensor preparation used by `cascadia/cascadia/augment.py`, without
+writing an intermediate ASF file.
+
+For each spectrum it extracts:
+
+- MS level
+- scan start time, converted from minutes to seconds
+- m/z and intensity arrays from mzML binary data
+- for MS2 scans: isolation window target m/z, lower/upper offsets, selected ion
+  m/z, and precursor charge
+
+The reader then builds augmented spectra by combining nearby MS2 peaks with
+nearby MS1 peaks. It applies the same top-N peak selection and intensity
+normalization pattern used in the Python augmentation code:
+
+- MS2 intensity: square root, then normalize by max intensity
+- MS1 intensity: square root twice, then normalize by max intensity
+
+The resulting tensors are:
+
+- `spectra`: `[candidate_count, padded_peak_count, 4]` containing `(m/z,
+  intensity, retention_time_delta, ms_level)`
+- `precursors`: `[candidate_count, 2]` containing `(neutral_precursor_mass,
+  charge)`
+
+The local reader uses standard C++ plus zlib and supports the ProteoWizard-style
+zlib-compressed 32/64-bit float arrays in the included demo file. For a broader
+production mzML implementation, prefer a dedicated C++ MS library such as
+OpenMS `MzMLFile` or ProteoWizard `msdata`.
 
 ## Notes
 

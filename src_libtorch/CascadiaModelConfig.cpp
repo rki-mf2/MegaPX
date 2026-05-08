@@ -140,6 +140,10 @@ CascadiaModelConfig CascadiaModelConfig::from_toml(
       parse_string(values, "model.path",
                    parse_string(values, "model_path",
                                 config.model_path.string())));
+  config.spectrum_path = resolve_path(
+      config_path,
+      parse_string(values, "sequence.spectrum_path",
+                   config.spectrum_path.string()));
   config.device = parse_string(values, "runtime.device",
                                parse_string(values, "model.device",
                                             config.device));
@@ -162,6 +166,12 @@ CascadiaModelConfig CascadiaModelConfig::from_toml(
                                 config.batch_size);
   config.augmentation_width = parse_int(values, "sequence.augmentation_width",
                                         config.augmentation_width);
+  config.candidate_max_charge = parse_int(values, "sequence.candidate_max_charge",
+                                          config.candidate_max_charge);
+  config.scan_width = parse_int(values, "sequence.scan_width",
+                                config.scan_width);
+  config.top_n_peaks = parse_int(values, "sequence.top_n_peaks",
+                                 config.top_n_peaks);
   config.max_sequence_length = parse_int(values, "sequence.max_sequence_length",
                                          config.max_sequence_length);
   config.score_threshold = parse_double(values, "sequence.score_threshold",
@@ -174,6 +184,9 @@ std::string CascadiaModelConfig::summary() const {
   std::ostringstream out;
   out << "Cascadia config\n";
   out << "Model path: " << model_path.string() << '\n';
+  if (!spectrum_path.empty()) {
+    out << "Spectrum path: " << spectrum_path.string() << '\n';
+  }
   out << "Device: " << device << '\n';
   out << "Tokenizer: " << tokenizer << '\n';
   if (!modifications_path.empty()) {
@@ -186,6 +199,8 @@ std::string CascadiaModelConfig::summary() const {
       << ", max_charge=" << max_charge << '\n';
   out << "Sequence inference: batch_size=" << batch_size
       << ", augmentation_width=" << augmentation_width
+      << ", candidate_max_charge=" << candidate_max_charge
+      << ", scan_width=" << scan_width << ", top_n_peaks=" << top_n_peaks
       << ", max_sequence_length=" << max_sequence_length
       << ", score_threshold=" << score_threshold << '\n';
   return out.str();

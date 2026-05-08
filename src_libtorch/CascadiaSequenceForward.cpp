@@ -88,10 +88,68 @@ torch::Tensor CascadiaSequenceForward::next_token_logits(
   if (output.token_logits.dim() < 2) {
     throw std::runtime_error("token_logits must have at least 2 dimensions.");
   }
+  if (output.token_logits.dim() == 2) {
+    return output.token_logits;
+  }
 
   const auto last_index = output.token_logits.size(1) - 1;
   return output.token_logits.index({torch::indexing::Slice(), last_index,
                                     torch::indexing::Slice()});
+}
+
+CascadiaSequenceForward::GreedyResult CascadiaSequenceForward::greedy_decode(
+    const torch::Tensor& spectra,
+    const torch::Tensor& precursors,
+    const CascadiaPeptideTokenizer& tokenizer,
+    const int64_t max_length) {
+  if (max_length <= 0) {
+    throw std::invalid_argument("max_length must be positive.");
+  }
+
+  const auto batch_size = spectra.size(0);
+  auto tokens = torch::empty({batch_size, 0},
+                             torch::TensorOptions().dtype(torch::kInt64)
+                                 .device(device()));
+  auto aa_confidence = torch::empty({batch_size, 0},
+                                    torch::TensorOptions().dtype(torch::kFloat32)
+                                        .device(device()));
+  auto finished = torch::zeros({batch_size},
+                               torch::TensorOptions().dtype(torch::kBool)
+                                   .device(device()));
+
+  for (int64_t step = 0; step < max_length; ++step) {
+    auto logits = next_token_logits(spectra, precursors, tokens);
+    auto scores = torch::softmax(logits, 1);
+    auto next_tokens = std::get<1>(scores.max(1)).to(torch::kInt64);
+    auto next_confidence = scores.gather(1, next_tokens.unsqueeze(1)).squeeze(1);
+
+    next_tokens = torch::where(
+        finished,
+        torch::full_like(next_tokens, tokenizer.stop_token_id()),
+        next_tokens);
+    next_confidence = torch::where(
+        finished,
+        torch::ones_like(next_confidence),
+        next_confidence);
+
+    tokens = torch::cat({tokens, next_tokens.unsqueeze(1)}, 1);
+    aa_confidence = torch::cat({aa_confidence, next_confidence.unsqueeze(1)}, 1);
+    finished = finished.logical_or(next_tokens == tokenizer.stop_token_id());
+
+    if (finished.all().item<bool>()) {
+      break;
+    }
+  }
+
+  auto peptide_log_scores =
+      torch::log(aa_confidence.clamp_min(1.0e-12)).sum(1).to(torch::kCPU);
+
+  GreedyResult result;
+  result.token_ids = tokens.to(torch::kCPU);
+  result.amino_acid_confidence = aa_confidence.to(torch::kCPU);
+  result.peptide_log_scores = peptide_log_scores;
+  result.sequences = tokenizer.detokenize(result.token_ids);
+  return result;
 }
 
 const CascadiaModelConfig& CascadiaSequenceForward::config() const {

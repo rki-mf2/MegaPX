@@ -5,6 +5,7 @@
 
 struct CascadiaModelConfig {
   std::filesystem::path model_path = "model/cascadia.pt";
+  std::filesystem::path spectrum_path;
   std::string device = "cpu";
   std::string tokenizer = "massivekb";
   std::filesystem::path modifications_path;
@@ -19,6 +20,9 @@ struct CascadiaModelConfig {
 
   int batch_size = 32;
   int augmentation_width = 2;
+  int candidate_max_charge = 4;
+  int scan_width = 1;
+  int top_n_peaks = 150;
   int max_sequence_length = 64;
   double score_threshold = 0.8;
 
