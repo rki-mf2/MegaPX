@@ -5,6 +5,8 @@ find_package(Torch REQUIRED)
 
 add_executable(torch_loader
   main.cpp
+  CascadiaModelConfig.cpp
+  CascadiaSequenceForward.cpp
   CheckpointModelLoader.cpp
   InferenceParameterInspector.cpp
 )

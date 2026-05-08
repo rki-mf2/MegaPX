@@ -49,7 +49,13 @@ Expected output is a random tensor similar to:
 To inspect a checkpoint:
 
 ```bash
-./build_libtorch/torch_loader src_libtorch/model/cascadia.ckpt
+./build_libtorch/torch_loader model/cascadia.ckpt
+```
+
+You can also pass a Cascadia sequence TOML config:
+
+```bash
+./build_libtorch/torch_loader src_libtorch/cascadia_sequence.example.toml
 ```
 
 `CheckpointModelLoader` supports two cases:
@@ -71,6 +77,44 @@ To inspect a checkpoint:
 - For Python `.ckpt` files, it prints the required conversion/runtime items
   that are still missing from C++ inference, plus best-effort hints from
   `state_dict` names.
+
+`CascadiaModelConfig` reads the sequence-inference TOML file. The config keeps
+the model path and the Python sequence defaults from
+`cascadia/cascadia/cascadia.py`:
+
+```toml
+[model]
+path = "../model/cascadia.ckpt"
+d_model = 512
+n_layers = 9
+n_head = 8
+dim_feedforward = 1024
+dropout = 0
+rt_width = 2
+max_charge = 10
+tokenizer = "massivekb"
+
+[runtime]
+device = "cpu"
+
+[sequence]
+batch_size = 32
+augmentation_width = 2
+max_sequence_length = 64
+score_threshold = 0.8
+```
+
+`CascadiaSequenceForward` is the tensor-level C++ inference wrapper. It expects
+an exported TorchScript model whose `forward` accepts:
+
+- `spectra`: float tensor `[batch, peaks, 4]` containing `(m/z, intensity,
+  retention_time, ms_level)`
+- `precursors`: float tensor `[batch, 2]` containing `(neutral_precursor_mass,
+  charge)`
+- `partial_sequence_tokens`: integer tensor `[batch, sequence_length]`
+
+It returns token logits, and optionally the precursor and fragment predictions
+if the TorchScript export returns the same tuple as Python `_forward_step`.
 
 ## Notes
 
