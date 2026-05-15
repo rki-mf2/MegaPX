@@ -26,8 +26,23 @@ struct CascadiaModelConfig {
   int max_sequence_length = 64;
   double score_threshold = 0.8;
 
+/*
+* @fn from_toml
+* @brief Loads Cascadia model and sequence inference settings from a TOML file.
+* @signature static CascadiaModelConfig from_toml(const std::filesystem::path& config_path);
+* @param config_path: path to the TOML configuration file.
+* @throws std::runtime_error when the config file cannot be opened or contains invalid assignments.
+* @return Parsed CascadiaModelConfig.
+*/
   static CascadiaModelConfig from_toml(
       const std::filesystem::path& config_path);
 
+/*
+* @fn summary
+* @brief Builds a human-readable summary of the configured model and sequence inference settings.
+* @signature std::string summary() const;
+* @throws None.
+* @return Configuration summary text.
+*/
   std::string summary() const;
 };

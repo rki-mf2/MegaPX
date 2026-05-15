@@ -10,12 +10,28 @@
 
 namespace {
 
+/*
+* @fn read_u16
+* @brief Reads a little-endian unsigned 16-bit value from raw bytes.
+* @signature uint16_t read_u16(const char* data);
+* @param data: pointer to at least two bytes.
+* @throws None.
+* @return Decoded unsigned 16-bit value.
+*/
 uint16_t read_u16(const char* data) {
   const auto* bytes = reinterpret_cast<const unsigned char*>(data);
   return static_cast<uint16_t>(bytes[0]) |
          (static_cast<uint16_t>(bytes[1]) << 8);
 }
 
+/*
+* @fn read_u32
+* @brief Reads a little-endian unsigned 32-bit value from raw bytes.
+* @signature uint32_t read_u32(const char* data);
+* @param data: pointer to at least four bytes.
+* @throws None.
+* @return Decoded unsigned 32-bit value.
+*/
 uint32_t read_u32(const char* data) {
   const auto* bytes = reinterpret_cast<const unsigned char*>(data);
   return static_cast<uint32_t>(bytes[0]) |
@@ -24,6 +40,14 @@ uint32_t read_u32(const char* data) {
          (static_cast<uint32_t>(bytes[3]) << 24);
 }
 
+/*
+* @fn format_bytes
+* @brief Formats a byte count using binary size units.
+* @signature std::string format_bytes(uint64_t bytes);
+* @param bytes: byte count to format.
+* @throws None.
+* @return Human-readable byte count.
+*/
 std::string format_bytes(uint64_t bytes) {
   constexpr std::array<const char*, 5> units = {"B", "KiB", "MiB", "GiB",
                                                 "TiB"};
@@ -40,6 +64,14 @@ std::string format_bytes(uint64_t bytes) {
   return out.str();
 }
 
+/*
+* @fn format_shape
+* @brief Formats tensor dimensions as a bracketed shape.
+* @signature std::string format_shape(const std::vector<int64_t>& sizes);
+* @param sizes: tensor dimension sizes.
+* @throws None.
+* @return Formatted tensor shape.
+*/
 std::string format_shape(const std::vector<int64_t>& sizes) {
   std::ostringstream out;
   out << '[';
@@ -53,6 +85,15 @@ std::string format_shape(const std::vector<int64_t>& sizes) {
   return out.str();
 }
 
+/*
+* @fn make_tensor_info
+* @brief Captures printable metadata for a named tensor.
+* @signature CheckpointModelLoader::TensorInfo make_tensor_info(const std::string& name, const torch::Tensor& tensor);
+* @param name: tensor name.
+* @param tensor: tensor to describe.
+* @throws None.
+* @return TensorInfo metadata record.
+*/
 CheckpointModelLoader::TensorInfo make_tensor_info(const std::string& name,
                                                    const torch::Tensor& tensor) {
   CheckpointModelLoader::TensorInfo info;
@@ -65,6 +106,15 @@ CheckpointModelLoader::TensorInfo make_tensor_info(const std::string& name,
   return info;
 }
 
+/*
+* @fn keep_largest_entries
+* @brief Keeps a bounded list of the largest archive entries by uncompressed size.
+* @signature void keep_largest_entries(std::vector<CheckpointModelLoader::ArchiveEntry>& entries, CheckpointModelLoader::ArchiveEntry entry);
+* @param entries: current largest-entry list.
+* @param entry: archive entry candidate to insert.
+* @throws None.
+* @return None.
+*/
 void keep_largest_entries(
     std::vector<CheckpointModelLoader::ArchiveEntry>& entries,
     CheckpointModelLoader::ArchiveEntry entry) {
@@ -78,6 +128,14 @@ void keep_largest_entries(
   }
 }
 
+/*
+* @fn looks_like_tensor_name
+* @brief Heuristically detects state_dict tensor names extracted from pickle text.
+* @signature bool looks_like_tensor_name(const std::string& value);
+* @param value: extracted string to classify.
+* @throws None.
+* @return True when the string resembles a model tensor name.
+*/
 bool looks_like_tensor_name(const std::string& value) {
   return value.find('.') != std::string::npos &&
          (value.find("weight") != std::string::npos ||
@@ -88,6 +146,14 @@ bool looks_like_tensor_name(const std::string& value) {
           value.find("norm") != std::string::npos);
 }
 
+/*
+* @fn is_readable_text
+* @brief Tests whether a string contains printable characters only.
+* @signature bool is_readable_text(const std::string& value);
+* @param value: string to validate.
+* @throws None.
+* @return True when all characters are printable.
+*/
 bool is_readable_text(const std::string& value) {
   return std::all_of(value.begin(), value.end(), [](const char ch) {
     const auto byte = static_cast<unsigned char>(ch);
@@ -95,6 +161,14 @@ bool is_readable_text(const std::string& value) {
   });
 }
 
+/*
+* @fn extract_pickle_strings
+* @brief Extracts readable string values from simple pickle string opcodes.
+* @signature std::vector<std::string> extract_pickle_strings(const std::vector<char>& data);
+* @param data: raw pickle payload bytes.
+* @throws None.
+* @return Extracted readable strings.
+*/
 std::vector<std::string> extract_pickle_strings(const std::vector<char>& data) {
   std::vector<std::string> values;
   const auto append = [&](std::size_t offset, std::size_t length) {
@@ -127,6 +201,14 @@ std::vector<std::string> extract_pickle_strings(const std::vector<char>& data) {
   return values;
 }
 
+/*
+* @fn is_checkpoint_key
+* @brief Tests whether a string is a known PyTorch-Lightning checkpoint key.
+* @signature bool is_checkpoint_key(const std::string& value);
+* @param value: extracted string to classify.
+* @throws None.
+* @return True when value is a known checkpoint key.
+*/
 bool is_checkpoint_key(const std::string& value) {
   static const std::array<std::string, 9> keys = {
       "epoch",     "global_step", "pytorch-lightning_version",
@@ -135,6 +217,16 @@ bool is_checkpoint_key(const std::string& value) {
   return std::find(keys.begin(), keys.end(), value) != keys.end();
 }
 
+/*
+* @fn append_unique_limited
+* @brief Appends a unique string while enforcing a maximum vector size.
+* @signature void append_unique_limited(std::vector<std::string>& values, std::string value, std::size_t limit);
+* @param values: destination string list.
+* @param value: value to append.
+* @param limit: maximum number of values to keep.
+* @throws None.
+* @return None.
+*/
 void append_unique_limited(std::vector<std::string>& values, std::string value,
                            std::size_t limit) {
   if (values.size() >= limit) {
@@ -147,6 +239,15 @@ void append_unique_limited(std::vector<std::string>& values, std::string value,
 
 }  // namespace
 
+/*
+* @fn load
+* @brief Loads a TorchScript module or inspects a PyTorch checkpoint archive.
+* @signature bool CheckpointModelLoader::load(const std::filesystem::path& checkpoint_path, const c10::Device& device);
+* @param checkpoint_path: path to the checkpoint or TorchScript model file.
+* @param device: LibTorch device used when loading TorchScript.
+* @throws None.
+* @return True when a TorchScript module was loaded or a PyTorch zip checkpoint was recognized.
+*/
 bool CheckpointModelLoader::load(const std::filesystem::path& checkpoint_path,
                                  const c10::Device& device) {
   reset();
@@ -181,18 +282,46 @@ bool CheckpointModelLoader::load(const std::filesystem::path& checkpoint_path,
   return archive_.is_zip;
 }
 
+/*
+* @fn loaded
+* @brief Reports whether the loader has a module or recognized checkpoint archive.
+* @signature bool CheckpointModelLoader::loaded() const;
+* @throws None.
+* @return True when load() recognized usable model or archive information.
+*/
 bool CheckpointModelLoader::loaded() const {
   return module_.has_value() || archive_.is_zip;
 }
 
+/*
+* @fn has_torchscript_module
+* @brief Reports whether the loaded file is directly runnable as TorchScript.
+* @signature bool CheckpointModelLoader::has_torchscript_module() const;
+* @throws None.
+* @return True when a TorchScript module is loaded.
+*/
 bool CheckpointModelLoader::has_torchscript_module() const {
   return module_.has_value();
 }
 
+/*
+* @fn last_error
+* @brief Returns the last module-loading or archive-inspection error message.
+* @signature const std::string& CheckpointModelLoader::last_error() const;
+* @throws None.
+* @return Last error string.
+*/
 const std::string& CheckpointModelLoader::last_error() const {
   return last_error_;
 }
 
+/*
+* @fn module
+* @brief Returns the loaded TorchScript module.
+* @signature const torch::jit::script::Module& CheckpointModelLoader::module() const;
+* @throws std::logic_error when no TorchScript module has been loaded.
+* @return Reference to the loaded TorchScript module.
+*/
 const torch::jit::script::Module& CheckpointModelLoader::module() const {
   if (!module_) {
     throw std::logic_error("No TorchScript module has been loaded.");
@@ -200,24 +329,60 @@ const torch::jit::script::Module& CheckpointModelLoader::module() const {
   return *module_;
 }
 
+/*
+* @fn is_python_checkpoint
+* @brief Reports whether the archive looks like a Python/PyTorch-Lightning checkpoint.
+* @signature bool CheckpointModelLoader::is_python_checkpoint() const;
+* @throws None.
+* @return True when the file is a Python checkpoint rather than TorchScript.
+*/
 bool CheckpointModelLoader::is_python_checkpoint() const {
   return archive_.is_zip && archive_.has_pickle && !archive_.has_torchscript_code;
 }
 
+/*
+* @fn checkpoint_keys
+* @brief Returns discovered top-level checkpoint keys from archive/data.pkl.
+* @signature const std::vector<std::string>& CheckpointModelLoader::checkpoint_keys() const;
+* @throws None.
+* @return Vector of checkpoint key names.
+*/
 const std::vector<std::string>& CheckpointModelLoader::checkpoint_keys() const {
   return archive_.checkpoint_keys;
 }
 
+/*
+* @fn sample_state_dict_names
+* @brief Returns representative state_dict tensor names discovered in the checkpoint.
+* @signature const std::vector<std::string>& CheckpointModelLoader::sample_state_dict_names() const;
+* @throws None.
+* @return Vector of sampled tensor names.
+*/
 const std::vector<std::string>& CheckpointModelLoader::sample_state_dict_names()
     const {
   return archive_.sample_tensor_names;
 }
 
+/*
+* @fn pytorch_lightning_version
+* @brief Returns the PyTorch-Lightning version recorded in the checkpoint, when present.
+* @signature const std::optional<std::string>& CheckpointModelLoader::pytorch_lightning_version() const;
+* @throws None.
+* @return Optional PyTorch-Lightning version string.
+*/
 const std::optional<std::string>&
 CheckpointModelLoader::pytorch_lightning_version() const {
   return archive_.pytorch_lightning_version;
 }
 
+/*
+* @fn summary
+* @brief Formats checkpoint, module, tensor, and archive metadata.
+* @signature std::string CheckpointModelLoader::summary(std::size_t max_items) const;
+* @param max_items: maximum number of tensors to print per tensor section.
+* @throws None.
+* @return Checkpoint summary text.
+*/
 std::string CheckpointModelLoader::summary(const std::size_t max_items) const {
   std::ostringstream out;
   out << "Checkpoint: " << checkpoint_path_.string() << '\n';
@@ -326,6 +491,13 @@ std::string CheckpointModelLoader::summary(const std::size_t max_items) const {
   return out.str();
 }
 
+/*
+* @fn reset
+* @brief Clears all loaded module state, archive metadata, and summary counters.
+* @signature void CheckpointModelLoader::reset();
+* @throws None.
+* @return None.
+*/
 void CheckpointModelLoader::reset() {
   checkpoint_path_.clear();
   module_.reset();
@@ -340,6 +512,13 @@ void CheckpointModelLoader::reset() {
   buffer_count_ = 0;
 }
 
+/*
+* @fn collect_module_summary
+* @brief Collects TorchScript method, parameter, and buffer metadata.
+* @signature void CheckpointModelLoader::collect_module_summary();
+* @throws None.
+* @return None.
+*/
 void CheckpointModelLoader::collect_module_summary() {
   if (!module_) {
     return;
@@ -365,6 +544,14 @@ void CheckpointModelLoader::collect_module_summary() {
   }
 }
 
+/*
+* @fn inspect_zip_archive
+* @brief Inspects a PyTorch zip archive without requiring Python model code.
+* @signature bool CheckpointModelLoader::inspect_zip_archive(const std::filesystem::path& checkpoint_path);
+* @param checkpoint_path: path to the zip checkpoint to inspect.
+* @throws None.
+* @return True when the file is recognized as a zip archive.
+*/
 bool CheckpointModelLoader::inspect_zip_archive(
     const std::filesystem::path& checkpoint_path) {
   std::ifstream input(checkpoint_path, std::ios::binary);

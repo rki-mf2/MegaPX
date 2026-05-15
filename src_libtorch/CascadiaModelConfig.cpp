@@ -8,8 +8,17 @@
 #include <string>
 #include <unordered_map>
 
+
 namespace {
 
+/*
+* @fn trim
+* @brief Removes leading and trailing whitespace from a string.
+* @signature std::string trim(std::string value);
+* @param value: string to trim.
+* @throws None.
+* @return Trimmed string.
+*/
 std::string trim(std::string value) {
   const auto is_space = [](unsigned char ch) { return std::isspace(ch) != 0; };
   value.erase(value.begin(),
@@ -19,6 +28,14 @@ std::string trim(std::string value) {
   return value;
 }
 
+/*
+* @fn strip_comment
+* @brief Removes TOML comment text while preserving hash characters inside quoted strings.
+* @signature std::string strip_comment(const std::string& line);
+* @param line: raw TOML line.
+* @throws None.
+* @return Line without trailing comment text.
+*/
 std::string strip_comment(const std::string& line) {
   bool in_string = false;
   char quote = '\0';
@@ -38,6 +55,14 @@ std::string strip_comment(const std::string& line) {
   return line;
 }
 
+/*
+* @fn unquote
+* @brief Removes matching single or double quotes from a TOML string value.
+* @signature std::string unquote(std::string value);
+* @param value: raw TOML value.
+* @throws None.
+* @return Unquoted string value.
+*/
 std::string unquote(std::string value) {
   value = trim(std::move(value));
   if (value.size() >= 2 &&
@@ -48,6 +73,14 @@ std::string unquote(std::string value) {
   return value;
 }
 
+/*
+* @fn lower
+* @brief Converts a string to lowercase for case-insensitive TOML keys.
+* @signature std::string lower(std::string value);
+* @param value: input string.
+* @throws None.
+* @return Lowercase string.
+*/
 std::string lower(std::string value) {
   std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
     return static_cast<char>(std::tolower(ch));
@@ -55,6 +88,16 @@ std::string lower(std::string value) {
   return value;
 }
 
+/*
+* @fn parse_int
+* @brief Parses an integer TOML value or returns a fallback.
+* @signature int parse_int(const std::unordered_map<std::string, std::string>& values, const std::string& key, int fallback);
+* @param values: parsed TOML key-value map.
+* @param key: key to read.
+* @param fallback: value returned when the key is absent.
+* @throws std::invalid_argument or std::out_of_range when the value cannot be parsed by std::stoi.
+* @return Parsed integer or fallback.
+*/
 int parse_int(const std::unordered_map<std::string, std::string>& values,
               const std::string& key, int fallback) {
   const auto it = values.find(key);
@@ -64,6 +107,16 @@ int parse_int(const std::unordered_map<std::string, std::string>& values,
   return std::stoi(it->second);
 }
 
+/*
+* @fn parse_double
+* @brief Parses a floating-point TOML value or returns a fallback.
+* @signature double parse_double(const std::unordered_map<std::string, std::string>& values, const std::string& key, double fallback);
+* @param values: parsed TOML key-value map.
+* @param key: key to read.
+* @param fallback: value returned when the key is absent.
+* @throws std::invalid_argument or std::out_of_range when the value cannot be parsed by std::stod.
+* @return Parsed double or fallback.
+*/
 double parse_double(const std::unordered_map<std::string, std::string>& values,
                     const std::string& key, double fallback) {
   const auto it = values.find(key);
@@ -73,6 +126,16 @@ double parse_double(const std::unordered_map<std::string, std::string>& values,
   return std::stod(it->second);
 }
 
+/*
+* @fn parse_string
+* @brief Reads and unquotes a string TOML value or returns a fallback.
+* @signature std::string parse_string(const std::unordered_map<std::string, std::string>& values, const std::string& key, const std::string& fallback);
+* @param values: parsed TOML key-value map.
+* @param key: key to read.
+* @param fallback: value returned when the key is absent.
+* @throws None.
+* @return Parsed string or fallback.
+*/
 std::string parse_string(const std::unordered_map<std::string, std::string>& values,
                          const std::string& key,
                          const std::string& fallback) {
@@ -83,6 +146,15 @@ std::string parse_string(const std::unordered_map<std::string, std::string>& val
   return unquote(it->second);
 }
 
+/*
+* @fn resolve_path
+* @brief Resolves a TOML path relative to the config file location.
+* @signature std::filesystem::path resolve_path(const std::filesystem::path& config_path, const std::string& raw_path);
+* @param config_path: path to the TOML file.
+* @param raw_path: raw path string from the TOML value.
+* @throws None.
+* @return Absolute paths unchanged, relative paths rooted at config_path.parent_path(), or an empty path.
+*/
 std::filesystem::path resolve_path(const std::filesystem::path& config_path,
                                    const std::string& raw_path) {
   if (raw_path.empty()) {
@@ -98,6 +170,14 @@ std::filesystem::path resolve_path(const std::filesystem::path& config_path,
 
 }  // namespace
 
+/*
+* @fn from_toml
+* @brief Loads Cascadia model and sequence inference settings from a TOML file.
+* @signature CascadiaModelConfig CascadiaModelConfig::from_toml(const std::filesystem::path& config_path);
+* @param config_path: path to the TOML configuration file.
+* @throws std::runtime_error when the config file cannot be opened or contains invalid assignments.
+* @return Parsed CascadiaModelConfig.
+*/
 CascadiaModelConfig CascadiaModelConfig::from_toml(
     const std::filesystem::path& config_path) {
   std::ifstream input(config_path);
@@ -180,6 +260,13 @@ CascadiaModelConfig CascadiaModelConfig::from_toml(
   return config;
 }
 
+/*
+* @fn summary
+* @brief Builds a human-readable summary of the configured model and sequence inference settings.
+* @signature std::string CascadiaModelConfig::summary() const;
+* @throws None.
+* @return Configuration summary text.
+*/
 std::string CascadiaModelConfig::summary() const {
   std::ostringstream out;
   out << "Cascadia config\n";

@@ -8,6 +8,14 @@
 
 namespace {
 
+/*
+* @fn argument_to_type
+* @brief Converts a TorchScript schema argument type to printable text.
+* @signature std::string argument_to_type(const c10::Argument& argument);
+* @param argument: TorchScript schema argument or return value.
+* @throws None.
+* @return Type text, or "unknown" when no real type is available.
+*/
 std::string argument_to_type(const c10::Argument& argument) {
   if (!argument.real_type()) {
     return "unknown";
@@ -15,6 +23,14 @@ std::string argument_to_type(const c10::Argument& argument) {
   return argument.real_type()->repr_str();
 }
 
+/*
+* @fn default_value_note
+* @brief Formats a TorchScript schema argument default value.
+* @signature std::string default_value_note(const c10::Argument& argument);
+* @param argument: TorchScript schema argument.
+* @throws None.
+* @return Default-value note text, or an empty string when absent.
+*/
 std::string default_value_note(const c10::Argument& argument) {
   if (!argument.default_value()) {
     return {};
@@ -25,6 +41,15 @@ std::string default_value_note(const c10::Argument& argument) {
   return out.str();
 }
 
+/*
+* @fn contains_any
+* @brief Tests whether any string contains any requested substring.
+* @signature bool contains_any(const std::vector<std::string>& values, const std::vector<std::string>& needles);
+* @param values: strings to search.
+* @param needles: substrings to match.
+* @throws None.
+* @return True when at least one substring is present.
+*/
 bool contains_any(const std::vector<std::string>& values,
                   const std::vector<std::string>& needles) {
   return std::any_of(values.begin(), values.end(), [&](const auto& value) {
@@ -34,12 +59,29 @@ bool contains_any(const std::vector<std::string>& values,
   });
 }
 
+/*
+* @fn append_hint
+* @brief Appends a model hint only if it has not already been added.
+* @signature void append_hint(std::vector<std::string>& hints, std::string hint);
+* @param hints: destination hint list.
+* @param hint: hint text to append.
+* @throws None.
+* @return None.
+*/
 void append_hint(std::vector<std::string>& hints, std::string hint) {
   if (std::find(hints.begin(), hints.end(), hint) == hints.end()) {
     hints.push_back(std::move(hint));
   }
 }
 
+/*
+* @fn format_parameter
+* @brief Formats one inspected parameter entry for summary output.
+* @signature std::string format_parameter(const InferenceParameterInspector::Parameter& item);
+* @param item: parameter metadata to format.
+* @throws None.
+* @return Formatted parameter line.
+*/
 std::string format_parameter(const InferenceParameterInspector::Parameter& item) {
   std::ostringstream out;
   out << "  " << item.name << ": " << item.type;
@@ -55,10 +97,25 @@ std::string format_parameter(const InferenceParameterInspector::Parameter& item)
 
 }  // namespace
 
+/*
+* @fn InferenceParameterInspector
+* @brief Constructs an inspector bound to a checkpoint loader.
+* @signature InferenceParameterInspector::InferenceParameterInspector(const CheckpointModelLoader& loader);
+* @param loader: checkpoint loader that owns model and archive metadata.
+* @throws None.
+* @return None.
+*/
 InferenceParameterInspector::InferenceParameterInspector(
     const CheckpointModelLoader& loader)
     : loader_(loader) {}
 
+/*
+* @fn inspect
+* @brief Inspects available model metadata to infer forward inputs, outputs, and runtime requirements.
+* @signature InferenceParameterInspector::Report InferenceParameterInspector::inspect() const;
+* @throws std::logic_error when a TorchScript module is expected but unavailable.
+* @return Structured inference-parameter report.
+*/
 InferenceParameterInspector::Report InferenceParameterInspector::inspect()
     const {
   Report report;
@@ -177,6 +234,13 @@ InferenceParameterInspector::Report InferenceParameterInspector::inspect()
   return report;
 }
 
+/*
+* @fn summary
+* @brief Formats the inference-parameter inspection as human-readable text.
+* @signature std::string InferenceParameterInspector::summary() const;
+* @throws std::logic_error when a TorchScript module is expected but unavailable.
+* @return Inspection summary text.
+*/
 std::string InferenceParameterInspector::summary() const {
   const auto report = inspect();
   std::ostringstream out;

@@ -42,11 +42,36 @@ class CascadiaMzmlReader {
     int max_charge = 4;
   };
 
+/*
+* @fn read
+* @brief Reads spectra and metadata from an mzML file.
+* @signature std::vector<Spectrum> read(const std::filesystem::path& mzml_path) const;
+* @param mzml_path: path to the mzML input file.
+* @throws std::runtime_error when the mzML file cannot be opened or contains unsupported binary precision.
+* @return Vector of parsed spectra with m/z and intensity arrays.
+*/
   std::vector<Spectrum> read(const std::filesystem::path& mzml_path) const;
 
+/*
+* @fn build_augmented_spectra
+* @brief Builds charge-candidate augmented spectra from parsed MS1/MS2 spectra.
+* @signature std::vector<AugmentedSpectrum> build_augmented_spectra(const std::vector<Spectrum>& spectra, const Options& options) const;
+* @param spectra: parsed mzML spectra.
+* @param options: peak, scan-width, and charge-candidate settings.
+* @throws None.
+* @return Vector of augmented spectra ready for tensor conversion.
+*/
   std::vector<AugmentedSpectrum> build_augmented_spectra(
       const std::vector<Spectrum>& spectra,
       const Options& options) const;
 
+/*
+* @fn to_tensors
+* @brief Converts augmented spectra into LibTorch tensors and matching candidate metadata.
+* @signature TensorBatch to_tensors(const std::vector<AugmentedSpectrum>& spectra) const;
+* @param spectra: augmented spectra to batch.
+* @throws None.
+* @return TensorBatch containing spectra, precursor tensors, retention times, precursor m/z values, and charges.
+*/
   TensorBatch to_tensors(const std::vector<AugmentedSpectrum>& spectra) const;
 };

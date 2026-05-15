@@ -14,6 +14,15 @@
 
 namespace {
 
+/*
+* @fn print_tensor_shape
+* @brief Prints a tensor name, shape, and dtype to standard output.
+* @signature void print_tensor_shape(const char* name, const torch::Tensor& tensor);
+* @param name: label printed before the tensor shape.
+* @param tensor: tensor whose rank, dimensions, and dtype are printed.
+* @throws None.
+* @return None.
+*/
 void print_tensor_shape(const char* name, const torch::Tensor& tensor) {
   std::cout << name << ": [";
   for (int64_t i = 0; i < tensor.dim(); ++i) {
@@ -25,6 +34,16 @@ void print_tensor_shape(const char* name, const torch::Tensor& tensor) {
   std::cout << "] " << tensor.dtype() << '\n';
 }
 
+/*
+* @fn run_cascadia_inference
+* @brief Runs greedy Cascadia sequence inference over tensor batches and prints sample candidates.
+* @signature void run_cascadia_inference(const CascadiaModelConfig& config, const CascadiaMzmlReader::TensorBatch& tensors);
+* @param config: Cascadia runtime and decoding settings.
+* @param tensors: batched spectra, precursors, and candidate metadata.
+* @throws c10::Error when the TorchScript model cannot be loaded or executed.
+* @throws std::exception when decoding or tensor access fails.
+* @return None.
+*/
 void run_cascadia_inference(const CascadiaModelConfig& config,
                             const CascadiaMzmlReader::TensorBatch& tensors) {
   CascadiaSequenceForward forward(config);
@@ -75,6 +94,15 @@ void run_cascadia_inference(const CascadiaModelConfig& config,
 
 }  // namespace
 
+/*
+* @fn main
+* @brief Command-line entry point for checkpoint inspection and optional mzML inference.
+* @signature int main(int argc, char** argv);
+* @param argc: command-line argument count.
+* @param argv: command-line argument values.
+* @throws None.
+* @return Process exit code.
+*/
 int main(int argc, char** argv) {
   if (argc > 1) {
     const std::filesystem::path input_path(argv[1]);

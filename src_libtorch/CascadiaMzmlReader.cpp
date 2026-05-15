@@ -19,6 +19,14 @@ namespace {
 
 constexpr double kProtonMass = 1.007276;
 
+/*
+* @fn read_file
+* @brief Reads an entire mzML file into memory.
+* @signature std::string read_file(const std::filesystem::path& path);
+* @param path: mzML file path.
+* @throws std::runtime_error when the file cannot be opened.
+* @return File contents as a string.
+*/
 std::string read_file(const std::filesystem::path& path) {
   std::ifstream input(path, std::ios::binary);
   if (!input) {
@@ -28,6 +36,15 @@ std::string read_file(const std::filesystem::path& path) {
           std::istreambuf_iterator<char>()};
 }
 
+/*
+* @fn attr_value
+* @brief Extracts an XML attribute value from a tag string.
+* @signature std::string attr_value(const std::string& tag, const std::string& attr);
+* @param tag: XML tag text.
+* @param attr: attribute name to read.
+* @throws None.
+* @return Attribute value, or an empty string when missing.
+*/
 std::string attr_value(const std::string& tag, const std::string& attr) {
   const auto needle = attr + "=\"";
   const auto begin = tag.find(needle);
@@ -42,6 +59,15 @@ std::string attr_value(const std::string& tag, const std::string& attr) {
   return tag.substr(value_begin, value_end - value_begin);
 }
 
+/*
+* @fn parse_double_or
+* @brief Parses a double value or returns a fallback for empty input.
+* @signature double parse_double_or(const std::string& value, double fallback = 0.0);
+* @param value: string value to parse.
+* @param fallback: value returned when input is empty.
+* @throws std::invalid_argument or std::out_of_range when std::stod cannot parse a non-empty value.
+* @return Parsed double or fallback.
+*/
 double parse_double_or(const std::string& value, double fallback = 0.0) {
   if (value.empty()) {
     return fallback;
@@ -49,6 +75,15 @@ double parse_double_or(const std::string& value, double fallback = 0.0) {
   return std::stod(value);
 }
 
+/*
+* @fn parse_int_or
+* @brief Parses an integer value or returns a fallback for empty input.
+* @signature int parse_int_or(const std::string& value, int fallback = 0);
+* @param value: string value to parse.
+* @param fallback: value returned when input is empty.
+* @throws std::invalid_argument or std::out_of_range when std::stoi cannot parse a non-empty value.
+* @return Parsed integer or fallback.
+*/
 int parse_int_or(const std::string& value, int fallback = 0) {
   if (value.empty()) {
     return fallback;
@@ -56,6 +91,16 @@ int parse_int_or(const std::string& value, int fallback = 0) {
   return std::stoi(value);
 }
 
+/*
+* @fn find_cv_value
+* @brief Finds a controlled-vocabulary parameter value by name in an XML block.
+* @signature std::string find_cv_value(const std::string& xml, const std::string& name, std::size_t offset = 0);
+* @param xml: XML text to search.
+* @param name: cvParam name attribute to match.
+* @param offset: search offset in the XML text.
+* @throws None.
+* @return Matched value attribute, or an empty string when missing.
+*/
 std::string find_cv_value(const std::string& xml, const std::string& name,
                           std::size_t offset = 0) {
   const auto pos = xml.find("name=\"" + name + "\"", offset);
@@ -70,10 +115,30 @@ std::string find_cv_value(const std::string& xml, const std::string& name,
   return attr_value(xml.substr(tag_begin, tag_end - tag_begin + 1), "value");
 }
 
+/*
+* @fn has_name
+* @brief Tests whether an XML block contains a name attribute with the requested value.
+* @signature bool has_name(const std::string& xml, const std::string& name);
+* @param xml: XML text to search.
+* @param name: name attribute value to match.
+* @throws None.
+* @return True when the name is present.
+*/
 bool has_name(const std::string& xml, const std::string& name) {
   return xml.find("name=\"" + name + "\"") != std::string::npos;
 }
 
+/*
+* @fn between
+* @brief Extracts text between an opening and closing XML marker.
+* @signature std::string between(const std::string& xml, const std::string& open, const std::string& close, std::size_t offset = 0);
+* @param xml: XML text to search.
+* @param open: opening marker.
+* @param close: closing marker.
+* @param offset: search offset in the XML text.
+* @throws None.
+* @return Text between markers, or an empty string when missing.
+*/
 std::string between(const std::string& xml, const std::string& open,
                     const std::string& close, std::size_t offset = 0) {
   const auto begin = xml.find(open, offset);
@@ -91,6 +156,14 @@ std::string between(const std::string& xml, const std::string& open,
   return xml.substr(content_begin + 1, end - content_begin - 1);
 }
 
+/*
+* @fn base64_decode
+* @brief Decodes base64 mzML binary payload text.
+* @signature std::vector<unsigned char> base64_decode(const std::string& input);
+* @param input: base64-encoded text.
+* @throws None.
+* @return Decoded bytes.
+*/
 std::vector<unsigned char> base64_decode(const std::string& input) {
   static constexpr std::array<int, 256> table = [] {
     std::array<int, 256> out{};
@@ -127,6 +200,15 @@ std::vector<unsigned char> base64_decode(const std::string& input) {
   return bytes;
 }
 
+/*
+* @fn inflate_zlib
+* @brief Decompresses zlib-compressed mzML binary payload bytes.
+* @signature std::vector<unsigned char> inflate_zlib(const std::vector<unsigned char>& data, std::size_t expected_size);
+* @param data: compressed bytes.
+* @param expected_size: expected decompressed byte count used for allocation.
+* @throws std::runtime_error when zlib initialization or decompression fails.
+* @return Decompressed bytes.
+*/
 std::vector<unsigned char> inflate_zlib(const std::vector<unsigned char>& data,
                                         std::size_t expected_size) {
   z_stream stream{};
@@ -156,6 +238,14 @@ std::vector<unsigned char> inflate_zlib(const std::vector<unsigned char>& data,
   return output;
 }
 
+/*
+* @fn read_little_endian
+* @brief Reads a little-endian scalar value from mzML binary bytes.
+* @signature template <typename T> T read_little_endian(const unsigned char* data);
+* @param data: pointer to little-endian bytes.
+* @throws None.
+* @return Decoded scalar value.
+*/
 template <typename T>
 T read_little_endian(const unsigned char* data) {
   T value{};
@@ -163,6 +253,15 @@ T read_little_endian(const unsigned char* data) {
   return value;
 }
 
+/*
+* @fn decode_binary_array
+* @brief Decodes an mzML binaryDataArray into double values.
+* @signature std::vector<double> decode_binary_array(const std::string& binary_xml, std::size_t default_array_length);
+* @param binary_xml: binaryDataArray XML block.
+* @param default_array_length: mzML default array length used to reserve decompression output.
+* @throws std::runtime_error when the binary precision is unsupported or zlib decompression fails.
+* @return Decoded m/z or intensity values, or an empty vector for other array types.
+*/
 std::vector<double> decode_binary_array(const std::string& binary_xml,
                                         std::size_t default_array_length) {
   const bool is_mz = has_name(binary_xml, "m/z array");
@@ -200,6 +299,16 @@ std::vector<double> decode_binary_array(const std::string& binary_xml,
   return values;
 }
 
+/*
+* @fn top_peaks_sorted_by_mz
+* @brief Selects the most intense peaks, normalizes intensities, and returns them sorted by m/z.
+* @signature std::vector<std::pair<double, double>> top_peaks_sorted_by_mz(const CascadiaMzmlReader::Spectrum& spectrum, std::size_t top_n, bool double_sqrt);
+* @param spectrum: spectrum containing m/z and intensity arrays.
+* @param top_n: maximum number of peaks to keep.
+* @param double_sqrt: whether to apply a second square-root intensity transform.
+* @throws None.
+* @return Vector of normalized m/z-intensity peak pairs sorted by m/z.
+*/
 std::vector<std::pair<double, double>> top_peaks_sorted_by_mz(
     const CascadiaMzmlReader::Spectrum& spectrum,
     std::size_t top_n,
@@ -245,6 +354,14 @@ struct Center {
 
 }  // namespace
 
+/*
+* @fn read
+* @brief Reads spectra and metadata from an mzML file.
+* @signature std::vector<CascadiaMzmlReader::Spectrum> CascadiaMzmlReader::read(const std::filesystem::path& mzml_path) const;
+* @param mzml_path: path to the mzML input file.
+* @throws std::runtime_error when the mzML file cannot be opened or contains unsupported binary precision.
+* @return Vector of parsed spectra with m/z and intensity arrays.
+*/
 std::vector<CascadiaMzmlReader::Spectrum> CascadiaMzmlReader::read(
     const std::filesystem::path& mzml_path) const {
   const auto xml = read_file(mzml_path);
@@ -321,6 +438,15 @@ std::vector<CascadiaMzmlReader::Spectrum> CascadiaMzmlReader::read(
   return spectra;
 }
 
+/*
+* @fn build_augmented_spectra
+* @brief Builds charge-candidate augmented spectra from parsed MS1/MS2 spectra.
+* @signature std::vector<CascadiaMzmlReader::AugmentedSpectrum> CascadiaMzmlReader::build_augmented_spectra(const std::vector<Spectrum>& spectra, const Options& options) const;
+* @param spectra: parsed mzML spectra.
+* @param options: peak, scan-width, and charge-candidate settings.
+* @throws None.
+* @return Vector of augmented spectra ready for tensor conversion.
+*/
 std::vector<CascadiaMzmlReader::AugmentedSpectrum>
 CascadiaMzmlReader::build_augmented_spectra(
     const std::vector<Spectrum>& spectra,
@@ -420,6 +546,14 @@ CascadiaMzmlReader::build_augmented_spectra(
   return augmented;
 }
 
+/*
+* @fn to_tensors
+* @brief Converts augmented spectra into LibTorch tensors and matching candidate metadata.
+* @signature CascadiaMzmlReader::TensorBatch CascadiaMzmlReader::to_tensors(const std::vector<AugmentedSpectrum>& spectra) const;
+* @param spectra: augmented spectra to batch.
+* @throws None.
+* @return TensorBatch containing spectra, precursor tensors, retention times, precursor m/z values, and charges.
+*/
 CascadiaMzmlReader::TensorBatch CascadiaMzmlReader::to_tensors(
     const std::vector<AugmentedSpectrum>& spectra) const {
   TensorBatch batch;
