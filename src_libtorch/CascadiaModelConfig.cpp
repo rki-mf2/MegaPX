@@ -256,6 +256,10 @@ CascadiaModelConfig CascadiaModelConfig::from_toml(
                                          config.max_sequence_length);
   config.score_threshold = parse_double(values, "sequence.score_threshold",
                                         config.score_threshold);
+  config.output_path = resolve_path(
+      config_path,
+      parse_string(values, "sequence.output_path",
+                   config.output_path.string()));
 
   return config;
 }
@@ -289,6 +293,7 @@ std::string CascadiaModelConfig::summary() const {
       << ", candidate_max_charge=" << candidate_max_charge
       << ", scan_width=" << scan_width << ", top_n_peaks=" << top_n_peaks
       << ", max_sequence_length=" << max_sequence_length
-      << ", score_threshold=" << score_threshold << '\n';
+      << ", score_threshold=" << score_threshold
+      << ", output_path=" << output_path.string() << '\n';
   return out.str();
 }

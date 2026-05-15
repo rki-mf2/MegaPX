@@ -27,3 +27,4 @@ scan_width = 1
 top_n_peaks = 150
 max_sequence_length = 64
 score_threshold = 0.8
+output_path = "demo_results"

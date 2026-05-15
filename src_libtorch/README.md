@@ -78,7 +78,8 @@ path = "../model/cascadia_sequence.pt"
 ```
 
 Now the same command will read `demo.mzML`, build the Cascadia tensors, run
-greedy sequence decoding, and print the first decoded candidate peptides:
+greedy sequence decoding, print the first decoded candidate peptides, and write
+filtered SSL results to the configured `output_path`:
 
 ```bash
 ./build_libtorch/torch_loader src_libtorch/cascadia_sequence.example.toml
@@ -128,7 +129,12 @@ batch_size = 32
 augmentation_width = 2
 max_sequence_length = 64
 score_threshold = 0.8
+output_path = "demo_results"
 ```
+
+The C++ runner follows Cascadia's `--out` convention: `output_path =
+"demo_results"` writes `demo_results.ssl`; setting a path that already ends in
+`.ssl` uses that exact file name.
 
 `CascadiaSequenceForward` is the tensor-level C++ inference wrapper. It expects
 an exported TorchScript model whose `forward` accepts:

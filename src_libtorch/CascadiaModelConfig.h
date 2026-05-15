@@ -25,6 +25,7 @@ struct CascadiaModelConfig {
   int top_n_peaks = 150;
   int max_sequence_length = 64;
   double score_threshold = 0.8;
+  std::filesystem::path output_path = "cascadia_results.ssl";
 
 /*
 * @fn from_toml

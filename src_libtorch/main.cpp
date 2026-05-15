@@ -8,9 +8,13 @@
 #include <torch/torch.h>
 
 #include <algorithm>
+#include <cmath>
 #include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <regex>
+#include <stdexcept>
 
 namespace {
 
@@ -32,6 +36,48 @@ void print_tensor_shape(const char* name, const torch::Tensor& tensor) {
     std::cout << tensor.size(i);
   }
   std::cout << "] " << tensor.dtype() << '\n';
+}
+
+/*
+* @fn ssl_output_path
+* @brief Resolves the SSL output path and appends .ssl when no extension is provided.
+* @signature std::filesystem::path ssl_output_path(const std::filesystem::path& output_path);
+* @param output_path: configured output path or Cascadia-style output prefix.
+* @throws None.
+* @return Output path ending in .ssl.
+*/
+std::filesystem::path ssl_output_path(const std::filesystem::path& output_path) {
+  if (output_path.empty()) {
+    return {};
+  }
+  if (output_path.extension() == ".ssl") {
+    return output_path;
+  }
+  auto ssl_path = output_path;
+  ssl_path += ".ssl";
+  return ssl_path;
+}
+
+/*
+* @fn normalized_sequence_for_ssl
+* @brief Applies Cascadia SSL sequence filtering rules for terminal modification tokens.
+* @signature std::string normalized_sequence_for_ssl(const std::string& sequence);
+* @param sequence: predicted MassiveKB-style peptide sequence.
+* @throws None.
+* @return Sequence when it is valid for SSL output, or an empty string when it should be skipped.
+*/
+std::string normalized_sequence_for_ssl(const std::string& sequence) {
+  if (sequence.empty()) {
+    return {};
+  }
+
+  const auto unmodified = std::regex_replace(sequence, std::regex("\\[.*?\\]"),
+                                             "");
+  if (sequence.find('-') != std::string::npos &&
+      unmodified.rfind('-') != 0) {
+    return {};
+  }
+  return sequence;
 }
 
 /*
@@ -57,7 +103,31 @@ void run_cascadia_inference(const CascadiaModelConfig& config,
   std::cout << "Candidates: " << total << ", batch_size: " << batch_size
             << ", max_sequence_length: " << config.max_sequence_length << '\n';
 
+  const auto output_path = ssl_output_path(config.output_path);
+  std::ofstream ssl_output;
+  if (!output_path.empty()) {
+    ssl_output.open(output_path);
+    if (!ssl_output) {
+      throw std::runtime_error("Cannot open SSL output file: " +
+                               output_path.string());
+    }
+    ssl_output << "file\tscan\tcharge\tsequence\tscore-type\tscore"
+               << "\tretention-time\tstart-time\tend-time\n";
+    ssl_output.flush();
+    std::cout << "Writing SSL results to: " << output_path.string() << '\n';
+  }
+
+  double max_retention_time = 0.0;
+  for (const auto retention_time : tensors.retention_times) {
+    max_retention_time = std::max(max_retention_time, retention_time);
+  }
+  const bool write_minutes = max_retention_time > 500.0;
+  const double retention_scale = write_minutes ? 60.0 : 1.0;
+  const double time_width =
+      (config.augmentation_width * config.rt_width) / retention_scale;
+
   int64_t printed = 0;
+  int64_t written = 0;
   for (int64_t begin = 0; begin < total; begin += batch_size) {
     const int64_t end = std::min(begin + batch_size, total);
     const auto rows = torch::indexing::Slice(begin, end);
@@ -69,21 +139,44 @@ void run_cascadia_inference(const CascadiaModelConfig& config,
     const auto scores = result.peptide_log_scores.contiguous();
     const auto score_acc = scores.accessor<float, 1>();
     for (std::size_t i = 0; i < result.sequences.size(); ++i) {
-      if (printed >= 10) {
-        continue;
-      }
       const auto global_index = begin + static_cast<int64_t>(i);
-      std::cout << "  candidate " << global_index << " charge="
-                << tensors.charges[static_cast<std::size_t>(global_index)]
-                << " precursor_mz="
-                << tensors.precursor_mz[static_cast<std::size_t>(global_index)]
-                << " rt="
-                << tensors.retention_times[static_cast<std::size_t>(global_index)]
-                << " sequence=" << result.sequences[i]
-                << " log_score=" << std::fixed << std::setprecision(4)
-                << score_acc[static_cast<int64_t>(i)] << '\n';
-      ++printed;
+      if (printed < 10) {
+        std::cout << "  candidate " << global_index << " charge="
+                  << tensors.charges[static_cast<std::size_t>(global_index)]
+                  << " precursor_mz="
+                  << tensors.precursor_mz[static_cast<std::size_t>(global_index)]
+                  << " rt="
+                  << tensors.retention_times[static_cast<std::size_t>(global_index)]
+                  << " sequence=" << result.sequences[i]
+                  << " log_score=" << std::fixed << std::setprecision(4)
+                  << score_acc[static_cast<int64_t>(i)] << '\n';
+        ++printed;
+      }
+
+      if (ssl_output) {
+        const auto sequence = normalized_sequence_for_ssl(result.sequences[i]);
+        const auto confidence =
+            std::exp(static_cast<double>(score_acc[static_cast<int64_t>(i)]));
+        if (!sequence.empty() && confidence > config.score_threshold) {
+          const auto metadata_index = static_cast<std::size_t>(global_index);
+          const double retention_time =
+              tensors.retention_times[metadata_index] / retention_scale;
+          ssl_output << config.spectrum_path.string() << '\t'
+                     << global_index << '\t'
+                     << tensors.charges[metadata_index] << '\t'
+                     << sequence << "\tUNKNOWN\t"
+                     << confidence << '\t'
+                     << retention_time << '\t'
+                     << (retention_time - time_width) << '\t'
+                     << (retention_time + time_width) << '\n';
+          ++written;
+        }
+      }
     }
+  }
+
+  if (ssl_output) {
+    std::cout << "SSL rows written: " << written << '\n';
   }
 
   if (total > printed) {
