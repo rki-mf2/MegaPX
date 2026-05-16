@@ -164,8 +164,12 @@ std::string between(const std::string& xml, const std::string& open,
 * @throws None.
 * @return Decoded bytes.
 */
+
+//size must be known at compile time because std::array size is part of the type
+//constexpr int size = 256;
+//std::array<int, size> table;
 std::vector<unsigned char> base64_decode(const std::string& input) {
-  static constexpr std::array<int, 256> table = [] {
+  static const std::array<int, 256> table = [] {
     std::array<int, 256> out{};
     out.fill(-1);
     const std::string chars =

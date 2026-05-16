@@ -2,7 +2,7 @@
 # Use a TorchScript export for C++ inference, for example a .pt file saved with
 # torch.jit.save(...). A Python/Lightning .ckpt can be inspected, but not run
 # directly by LibTorch.
-path = "../model/cascadia_sequence.pt"
+path = "cascadia_sequence.pt"
 tokenizer = "massivekb"
 modifications_path = ""
 
@@ -16,10 +16,10 @@ rt_width = 2
 max_charge = 10
 
 [runtime]
-device = "cpu"
+device = "auto"
 
 [sequence]
-spectrum_path = "../cascadia/demo.mzML"
+spectrum_path = "demo.mzML"
 batch_size = 32
 augmentation_width = 2
 candidate_max_charge = 4
@@ -27,4 +27,4 @@ scan_width = 1
 top_n_peaks = 150
 max_sequence_length = 64
 score_threshold = 0.8
-output_path = "demo_results"
+output_path = "../demo_results"

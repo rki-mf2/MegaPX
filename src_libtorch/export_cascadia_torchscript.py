@@ -4,9 +4,7 @@
 Run from the repository root with a Python environment that has Cascadia,
 PyTorch, and PyTorch-Lightning installed:
 
-    python src_libtorch/export_cascadia_torchscript.py \
-      --checkpoint model/cascadia.ckpt \
-      --output model/cascadia_sequence.pt
+    python export_cascadia_torchscript.py --checkpoint cascadia.ckpt --output cascadia_sequence.pt
 """
 
 from __future__ import annotations
