@@ -23,7 +23,9 @@ struct CascadiaModelConfig {
   int candidate_max_charge = 4;
   int scan_width = 1;
   int top_n_peaks = 150;
-  int max_sequence_length = 64;
+  int max_sequence_length = 32;
+  std::string output_mode = "python";
+  bool jit_optimize = true;
   double score_threshold = 0.8;
   std::filesystem::path output_path = "cascadia_results.ssl";
 

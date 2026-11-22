@@ -1,0 +1,19 @@
+{
+  "cpp": "${WORKSPACE}/MegaPX/build_libtorch/megapx_sequence",
+  "cpp_sha256": "6f7a5754c3870bd7b083d4b964597e8c3f46c907deb6b705391549edea2f2bca",
+  "models": [
+    {
+      "path": "${WORKSPACE}/MegaPX/models/cascadia.pt",
+      "sha256": "bee2e2f2305a83c86d92451ecee3ac785d60afc78f6d5dafff6f0e81a3369145"
+    },
+    {
+      "path": "${WORKSPACE}/MegaPX/models/cascadia_pretrained.pt",
+      "sha256": "4121631b38f469cf28e0a23fad95b7c868f59443fd210b67a4f92fad6747f532"
+    },
+    {
+      "path": "${WORKSPACE}/MegaPX/models/cascadia_astral_tuned.pt",
+      "sha256": "93ab697c26dae7f2b0bccb5d8115f68df8a4c7284b5ddd2543437c677fcae753"
+    }
+  ],
+  "verification": "Executable and canonical model bundles are byte-identical to all three full-file tested artifacts"
+}

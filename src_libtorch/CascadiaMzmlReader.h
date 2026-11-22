@@ -3,6 +3,7 @@
 #include <torch/torch.h>
 
 #include <filesystem>
+#include <array>
 #include <string>
 #include <vector>
 
@@ -23,6 +24,7 @@ class CascadiaMzmlReader {
 
   struct AugmentedSpectrum {
     double precursor_mz = 0.0;
+    double isolation_width = 0.0;
     int charge = 0;
     double retention_time_seconds = 0.0;
     std::vector<std::array<float, 4>> peaks;

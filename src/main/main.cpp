@@ -10,6 +10,9 @@
 #include <sys/time.h>
 
 #include "parser.hpp"
+#ifdef MEGAPX_WITH_CASCADIA
+#include "CascadiaPipeline.h"
+#endif
 
 
 
@@ -32,13 +35,25 @@ long getPeakRSS(void)
 {
 	struct rusage r;
 	getrusage(RUSAGE_SELF, &r);
+#ifdef __APPLE__
+	return r.ru_maxrss;
+#else
 	return r.ru_maxrss * 1024;
+#endif
 }
 
 
 int main(int argc, char const **argv)
 {
 
+    if (argc > 1 && std::string(argv[1]) == "--sequence") {
+#ifdef MEGAPX_WITH_CASCADIA
+        return cascadia_cli(argc, argv);
+#else
+        std::cerr << "Sequencing requires a build with -DMEGAPX_WITH_CASCADIA=ON, or use megapx_sequence.\n";
+        return 1;
+#endif
+    }
 	StopClock megaXUsage;
 /*
 	if (__cplusplus != 202002L) {

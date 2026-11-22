@@ -1,13 +1,25 @@
-## MegaPX: Fast Peptide Assignment Method Using Index Databases with Various Counting Algorithms
+# MegaPX: Fast Peptide Assignment Method Using Index Databases with Various Counting Algorithms
 
 <p align="center">
-<img src="img/logo_1.png" width=40%>
-<p>
+<img src="img/logo_1.png" alt="MegaPX logo" width="40%">
+</p>
 <div align="center">
 
 [![bioRxiv](https://img.shields.io/badge/biorxiv-2025.04.14.648734v1-b31b1b)](https://www.biorxiv.org/content/10.1101/2025.04.14.648734v1)&nbsp;
 [![Bioinformatics](https://img.shields.io/badge/Bioinformatics-10.1093%2Fbioinformatics%2Fbtag134-blue)](https://doi.org/10.1093/bioinformatics/btag134)
 [![code](https://img.shields.io/badge/code-MegaPX-blue)](https://github.com/lutfia95/MegaPX)&nbsp;
+
+[![CMake tests](https://github.com/lutfia95/MegaPX/actions/workflows/cmake-single-platform.yml/badge.svg?branch=master)](https://github.com/lutfia95/MegaPX/actions/workflows/cmake-single-platform.yml)
+[![Sequencer and sanitizers CI](https://github.com/lutfia95/MegaPX/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/lutfia95/MegaPX/actions/workflows/ci.yml)
+[![Doxygen docs](https://github.com/lutfia95/MegaPX/actions/workflows/docs.yml/badge.svg?branch=master)](https://github.com/lutfia95/MegaPX/actions/workflows/docs.yml)
+![C++](https://img.shields.io/badge/C%2B%2B-23%20%7C%2017-00599C?logo=cplusplus&logoColor=white)
+![CMake](https://img.shields.io/badge/CMake-%E2%89%A53.20-064F8C?logo=cmake&logoColor=white)
+![OpenMP](https://img.shields.io/badge/OpenMP-search%20required-5C2D91)
+![LibTorch](https://img.shields.io/badge/LibTorch-optional%20sequencing-EE4C2C?logo=pytorch&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.10-3776AB?logo=python&logoColor=white)
+![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-FCC624?logo=linux&logoColor=black)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 
 </div>
 
@@ -19,7 +31,10 @@
 
 * [Description](#description)
 * [Installation](#installation)
-* [Tests](#tests)
+* [Tests and CI](#tests)
+* [Cascadia C++ loader](#cascadia-mzml-sequencing)
+* [All loader settings](src_libtorch/README.md#complete-command-line-reference)
+* [Python/C++ agreement benchmarks](src_libtorch/README.md#reproduce-all-three-pythonc-benchmarks)
 * [Commands](#commands)
 * [Use-cases](#use-cases)
 * [Parameters](#parameters )
@@ -28,7 +43,7 @@
 MegaPX is designed to mutate protein databases, enabling users to search for de novo peptides in both the original and mutated versions. The tool employs a _k_-mer-based search, providing rapid and highly accurate peptide assignment capability. Beyond this primary function, the tool has numerous other use cases, including metaproteomics classification, virus assignment, and peptide classification.   
 MegaPX utilizes four distinct counting algorithms: [IBF](https://github.com/seqan/hibf/), [HBF](https://github.com/seqan/hibf/), [FM-Index](https://github.com/seqan/seqan3), and binary search. As we assessed these four algorithms in terms of runtime and performance, it became imperative to incorporate them into a single tool, allowing users the freedom to choose based on their specific use case. Mutation generation relies on a substitution matrix containing values proportional to the likelihood of amino acid `i` mutating into amino acid `j` across all possible pairs of amino acids. Each reference amino acid sequence undergoes _k_-merization, and mutated _k_-mers are generated based on the user-defined score, which is the sum of _k_-mer alignment scores. The tool is designed in step commands, which will be included as rules in the Snakemake pipeline. 
 ## <a name="installation"></a>Installation   
-MegaPX runs only under Linux x86_64; we tested the installation under WSL 2 (Windows Subsystem for Linux) and worked without any issues. We recommend the Conda installations for all dependencies by:   
+The main MegaPX search tool targets Linux x86_64 and has also been tested under WSL 2. The standalone Cascadia sequencer additionally supports macOS; see its build instructions below. We recommend Conda for the search dependencies:
 ```
 conda create --name MegaPX_env OR  conda create --prefix path/to/MegaPX_env  
 conda activate MegaPX_env  OR conda activate path/to/MegaPX_env     
@@ -61,6 +76,115 @@ If you want to run only the MegaPX unit test binary directly:
 ```
 ./test/megapx_tests
 ```
+
+### Sequencer tests and CI
+
+The [native unit tests](tests/cascadia_native_tests.cpp) cover vocabulary order,
+stop tokens, mass calculations, SSL modification formatting, FASTA headers,
+and mixed-precision/zlib mzML decoding with a [tiny fixture](tests/fixtures/tiny.mzML).
+The [benchmark unit tests](tests/test_cascadia_benchmark.py) verify agreement
+failure detection and independent peak-memory measurements using only Python's
+standard library. The [pipeline tests](tests/test_cascadia_pipeline.py) run real
+Cascadia inference and check outputs, overwrite protection and the optional
+search subprocess contract; their search executable is a test stub.
+
+```bash
+# No model or Torch installation needed for these Python tests.
+python tests/test_cascadia_benchmark.py
+
+# After building the standalone native loader:
+ctest --test-dir build_libtorch --output-on-failure
+
+# Requires a local model bundle and demo mzML (kept out of Git):
+python tests/test_cascadia_pipeline.py \
+  --sequencer build_libtorch/megapx_sequence \
+  --bundle models/cascadia.pt --mzml ../demo.mzML
+```
+
+[Sequencer CI](.github/workflows/ci.yml) runs benchmark unit tests and native
+CTest with and without Address/UndefinedBehavior sanitizers. It downloads a CPU
+Torch wheel, not trained checkpoints. The prebuilt Torch dependency is not
+itself sanitizer-instrumented; leak checking of its process-lifetime caches is
+disabled. Full three-checkpoint agreement/performance tests are run locally
+using the [reproduction script](scripts/reproduce_benchmark.sh).
+
+Read the [published test record and anonymized logs](docs/benchmarks/2026-11-21/README.md)
+for exactly what was tested, all three checkpoint comparisons, runtime/peak-RAM
+measurements, commands, environment details and local test results.
+
+Linux sanitizer builds run AddressSanitizer and UndefinedBehaviorSanitizer.
+With the prebuilt macOS Torch package, local builds use UndefinedBehaviorSanitizer
+because a local ASan build stalled during startup; Linux CI is configured to cover ASan.
+Configure a separate build:
+
+```bash
+cmake -S src_libtorch -B build_sanitizers \
+  -DCMAKE_PREFIX_PATH="$(python -c 'import torch; print(torch.utils.cmake_prefix_path)')" \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCASCADIA_ENABLE_SANITIZERS=ON
+cmake --build build_sanitizers -j 2
+ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 \
+  ctest --test-dir build_sanitizers --output-on-failure
+```
+
+Build API docs with `doxygen Doxyfile` and open `build-docs/html/index.html`.
+The [documentation workflow](.github/workflows/docs.yml) provides the generated
+HTML as a GitHub Actions artifact; a Pages site is not required. Workflow
+badges reflect GitHub's status once these files are pushed and Actions runs.
+
+### Cascadia mzML sequencing
+
+The optional LibTorch integration provides `--sequence` to sequence an mzML
+file, write matched `.ssl` and peptide FASTA outputs, and optionally forward
+those peptides to `multi_indexing`. The standalone sequencer can be built
+without the MegaPX search dependencies. The main search tool uses C++23 on
+Linux; the standalone sequencer uses C++17 and has also been tested on macOS.
+OpenMP is required for search. LibTorch and zlib are required for sequencing.
+See [Cascadia build, export and usage](src_libtorch/README.md), including the
+[complete loader option table](src_libtorch/README.md#complete-command-line-reference)
+and [benchmark/measurement commands](src_libtorch/README.md#reproduce-all-three-pythonc-benchmarks).
+
+```bash
+./build_libtorch/megapx_sequence \
+  --sequence ../demo.mzML --model models/cascadia.pt --out results/demo
+```
+
+The exporter now keeps compact scripted methods by default (`--no-freeze`).
+Full-file tests with all three public checkpoints matched Python's predictions;
+native peak RAM fell from 3,172–3,259 MiB to 848–963 MiB on the tested Mac.
+See the [measured runtime/RAM table and limitations](src_libtorch/README.md#measured-memory-and-runtime).
+The [benchmark record](docs/benchmarks/2026-11-21/README.md) links the actual logs
+and explains the compact and frozen exports of the same model weights.
+Re-export existing frozen bundles to obtain the memory reduction.
+
+#### Loader settings
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--sequence PATH` | Required | DIA mzML input; charges and scan context are expanded into candidates. |
+| `--model PATH` | Required | Exported Cascadia TorchScript `.pt` bundle with its vocabulary/masses. |
+| `--out DIR`, `-o DIR` | Required | Results directory; existing generated result files are protected. |
+| `--help`, `-h` | — | Show command help and exit. |
+| `--device auto\|cpu\|cuda` | `auto` | CUDA when available, otherwise CPU; explicit CUDA fails when unavailable. |
+| `--threads N` | `4` | Positive CPU intra-op thread count. |
+| `--batch-size N` | `32` | Positive number of augmented candidates decoded per batch. |
+| `--score-threshold X` | `0.8` | Retain confidence strictly greater than X; allowed range is 0–1. |
+| `--max-charge N` | `4` | Generate candidates with charges 2 through N; N must be at least 2. |
+| `--scan-width N` | `1` | Nearest MS1 and matching MS2 scans included in augmentation. |
+| `--top-peaks N` | `150` | Most intense peaks selected from each contributing scan. |
+| `--max-length N` | `32` | Maximum decoding iterations; 32 reproduces Python's default. |
+| `--output-mode python\|token` | `python` | Original Python scoring/filtering, or optional token-based scoring and per-window filtering. |
+| `--jit-optimize on\|off` | `on` | Runtime TorchScript profiling/optimization; `off` is available for memory/performance comparison. |
+| `--limit N` | All | Process only the first N augmented candidates for a smoke test. |
+| `--dump-tensors PATH` | Disabled | Save the first prepared batch in a Torch archive for diagnostics. |
+| `--search` | Disabled | Run MegaPX `multi_indexing` after sequencing and closing output files. |
+| `--megapx PATH` | Required with search | Existing executable used for the search subprocess. |
+| `--search-mode MODE` | `multi_indexing` | Currently only `multi_indexing` is supported. |
+| `--` | — | Everything afterward is passed as search options; sequencing manages `-f`, `-F`, and `-o`. |
+
+Builds, model weights, raw spectra, predictions, benchmarks and logs are excluded
+by [.gitignore](.gitignore). Source, workflows, configuration examples, tests and
+small reference FASTA/matrix fixtures remain trackable.
+
 ## <a name="commands"></a>Commands  
 |Subcommand                                                                |Description                                                     |
 |:-------------------------------------------------------------------------|:---------------------------------------------------------------|

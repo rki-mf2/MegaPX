@@ -1,0 +1,108 @@
+Loading Cascadia bundle "${WORKSPACE}/MegaPX/models/compact/cascadia.pt"
+Sequencing 2880 candidates; encoder cached once per batch
+Decoded 32/2880; accepted 4
+Decoded 64/2880; accepted 5
+Decoded 96/2880; accepted 8
+Decoded 128/2880; accepted 9
+Decoded 160/2880; accepted 11
+Decoded 192/2880; accepted 16
+Decoded 224/2880; accepted 21
+Decoded 256/2880; accepted 22
+Decoded 288/2880; accepted 25
+Decoded 320/2880; accepted 25
+Decoded 352/2880; accepted 31
+Decoded 384/2880; accepted 34
+Decoded 416/2880; accepted 34
+Decoded 448/2880; accepted 37
+Decoded 480/2880; accepted 37
+Decoded 512/2880; accepted 43
+Decoded 544/2880; accepted 45
+Decoded 576/2880; accepted 48
+Decoded 608/2880; accepted 51
+Decoded 640/2880; accepted 51
+Decoded 672/2880; accepted 53
+Decoded 704/2880; accepted 59
+Decoded 736/2880; accepted 66
+Decoded 768/2880; accepted 66
+Decoded 800/2880; accepted 66
+Decoded 832/2880; accepted 69
+Decoded 864/2880; accepted 74
+Decoded 896/2880; accepted 75
+Decoded 928/2880; accepted 78
+Decoded 960/2880; accepted 78
+Decoded 992/2880; accepted 81
+Decoded 1024/2880; accepted 88
+Decoded 1056/2880; accepted 90
+Decoded 1088/2880; accepted 92
+Decoded 1120/2880; accepted 94
+Decoded 1152/2880; accepted 94
+Decoded 1184/2880; accepted 96
+Decoded 1216/2880; accepted 99
+Decoded 1248/2880; accepted 103
+Decoded 1280/2880; accepted 103
+Decoded 1312/2880; accepted 103
+Decoded 1344/2880; accepted 105
+Decoded 1376/2880; accepted 110
+Decoded 1408/2880; accepted 112
+Decoded 1440/2880; accepted 113
+Decoded 1472/2880; accepted 118
+Decoded 1504/2880; accepted 122
+Decoded 1536/2880; accepted 125
+Decoded 1568/2880; accepted 125
+Decoded 1600/2880; accepted 126
+Decoded 1632/2880; accepted 131
+Decoded 1664/2880; accepted 131
+Decoded 1696/2880; accepted 131
+Decoded 1728/2880; accepted 136
+Decoded 1760/2880; accepted 136
+Decoded 1792/2880; accepted 136
+Decoded 1824/2880; accepted 137
+Decoded 1856/2880; accepted 142
+Decoded 1888/2880; accepted 142
+Decoded 1920/2880; accepted 142
+Decoded 1952/2880; accepted 144
+Decoded 1984/2880; accepted 152
+Decoded 2016/2880; accepted 154
+Decoded 2048/2880; accepted 155
+Decoded 2080/2880; accepted 157
+Decoded 2112/2880; accepted 163
+Decoded 2144/2880; accepted 167
+Decoded 2176/2880; accepted 170
+Decoded 2208/2880; accepted 173
+Decoded 2240/2880; accepted 174
+Decoded 2272/2880; accepted 174
+Decoded 2304/2880; accepted 176
+Decoded 2336/2880; accepted 178
+Decoded 2368/2880; accepted 178
+Decoded 2400/2880; accepted 180
+Decoded 2432/2880; accepted 186
+Decoded 2464/2880; accepted 190
+Decoded 2496/2880; accepted 190
+Decoded 2528/2880; accepted 192
+Decoded 2560/2880; accepted 194
+Decoded 2592/2880; accepted 195
+Decoded 2624/2880; accepted 197
+Decoded 2656/2880; accepted 198
+Decoded 2688/2880; accepted 202
+Decoded 2720/2880; accepted 206
+Decoded 2752/2880; accepted 208
+Decoded 2784/2880; accepted 211
+Decoded 2816/2880; accepted 211
+Decoded 2848/2880; accepted 216
+Decoded 2880/2880; accepted 220
+Results written to "${WORKSPACE}/MegaPX/results/benchmark_compact/cascadia/cpp"
+
+**************** MegaPX Sequencing Usage Report ****************
+Status                 : complete
+Real time (total)      : 362.437 sec
+Real time (sequencing) : 362.437 sec
+CPU time (total)       : 502.135 sec
+CPU time (sequencer)   : 502.135 sec
+Peak RSS (sequencer)   : 847.906 MiB
+***************************************************************
+
+=== End-to-end benchmark measurement ===
+Elapsed time: 362.631839 sec
+CPU time (user + system): 502.307137 sec
+Peak process RSS: 847.906250 MiB
+Exit code: 0

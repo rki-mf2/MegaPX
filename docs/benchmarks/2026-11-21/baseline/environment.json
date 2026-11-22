@@ -1,0 +1,15 @@
+{
+  "python": "3.10.22",
+  "platform": "macOS-27.2-arm64-arm-64bit",
+  "packages": {
+    "cascadia": "0.0.7",
+    "torch": "2.0.1",
+    "pytorch-lightning": "1.9.5",
+    "lightning": "2.0.9.post0",
+    "numpy": "1.26.4",
+    "numba": "0.68.1",
+    "pyteomics": "5.0.2",
+    "spectrum-utils": "0.5.0",
+    "psims": "1.4.0"
+  }
+}

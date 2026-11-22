@@ -95,7 +95,7 @@ void run_cascadia_inference(const CascadiaModelConfig& config,
   CascadiaSequenceForward forward(config);
   forward.load();
 
-  const auto tokenizer = CascadiaPeptideTokenizer::massivekb();
+  const auto& tokenizer = forward.tokenizer();
   const int64_t total = tensors.spectra.size(0);
   const int64_t batch_size = std::max<int64_t>(1, config.batch_size);
 

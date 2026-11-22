@@ -258,8 +258,8 @@ void HIBF::countIBF(const std::string& IBFFileName, const std::string& queryFile
             std::cout << unsigned(resultsVector[i][j]) << " ";
         }
         std::cout << std::endl; // Move to the next row
-    }*
-    /*
+    }
+
     for (const auto& row : resultsVector) {
         for (const auto& element : row) {
             logFile << element << ' ';

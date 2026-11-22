@@ -46,3 +46,10 @@ add_subdirectory(fm_index_mx)
 
 enable_testing()
 add_subdirectory(test)
+
+option(MEGAPX_WITH_CASCADIA "Build native Cascadia sequencing support" OFF)
+if(MEGAPX_WITH_CASCADIA)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../src_libtorch ${CMAKE_CURRENT_BINARY_DIR}/cascadia)
+  target_link_libraries(megapx PRIVATE cascadia_runtime)
+  target_compile_definitions(megapx PRIVATE MEGAPX_WITH_CASCADIA=1)
+endif()

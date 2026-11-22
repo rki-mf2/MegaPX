@@ -1,0 +1,7 @@
+['HGESAWNLENR']
+['SVEEYANC', '[', '+57.02', ']', 'HLAR']
+['', '[', '+42.01', ']', '-HGESAWNLENR']
+['', '[', '+25.980265', ']', '-HGESAWNLENR']
+{"preflight": "passed", "unimod_source": "${CASCADIA_ENV}/lib/python3.10/site-packages/psims/controlled_vocabulary/vendor/unimod_tables.xml.gz", "unimod_xml_sha256": "7b303537f45f8f0d7ddd1e5b19cf59060474eafb18e33bef0b17fef078ef4c38", "writer_rows": 4}
+${CASCADIA_ENV}/lib/python3.10/site-packages/psims/mzmlb/writer.py:33: UserWarning: hdf5plugin is missing! Only the slower GZIP compression scheme will be available! Please install hdf5plugin to be able to use Blosc.
+  warnings.warn(

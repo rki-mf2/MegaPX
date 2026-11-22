@@ -1,0 +1,129 @@
+{
+  "reference_run": "${WORKSPACE}/MegaPX/results/benchmark_python_default_verified",
+  "reference_manifest_sha256": "b29fe8b1679b92ab0849e8b251232a012121acd8e395baf6b17b1d779d473119",
+  "cpp": "${WORKSPACE}/MegaPX/build_memory/megapx_sequence",
+  "cpp_sha256": "6f7a5754c3870bd7b083d4b964597e8c3f46c907deb6b705391549edea2f2bca",
+  "jit_optimize": "on",
+  "models": [
+    {
+      "name": "cascadia",
+      "path": "${WORKSPACE}/MegaPX/models/compact/cascadia.pt",
+      "sha256": "bee2e2f2305a83c86d92451ecee3ac785d60afc78f6d5dafff6f0e81a3369145",
+      "metadata": {
+        "format": "cascadia-bundle-v1",
+        "frozen": false,
+        "architecture": {
+          "d_model": 512,
+          "n_layers": 9,
+          "dim_feedforward": 1024,
+          "max_charge": 10,
+          "n_tokens": 28
+        },
+        "n_head": 8,
+        "rt_width": 2.0,
+        "torch_version": "2.0.1",
+        "checkpoint": "cascadia.ckpt",
+        "tokenizer_direction": "forward",
+        "preprocessing": "cascadia-0.0.7",
+        "vocabulary_source": "canonical MassiveKB (public Cascadia models)",
+        "parity": "passed: 3 variable input shapes",
+        "checkpoint_sha256": "0f5e91413c716b22019699c8cb25655216f9c96d0f2aeb6ec42084bb65652192"
+      }
+    },
+    {
+      "name": "cascadia_pretrained",
+      "path": "${WORKSPACE}/MegaPX/models/compact/cascadia_pretrained.pt",
+      "sha256": "4121631b38f469cf28e0a23fad95b7c868f59443fd210b67a4f92fad6747f532",
+      "metadata": {
+        "format": "cascadia-bundle-v1",
+        "frozen": false,
+        "architecture": {
+          "d_model": 512,
+          "n_layers": 9,
+          "dim_feedforward": 1024,
+          "max_charge": 10,
+          "n_tokens": 28
+        },
+        "n_head": 8,
+        "rt_width": 2.0,
+        "torch_version": "2.0.1",
+        "checkpoint": "cascadia_pretrained.ckpt",
+        "tokenizer_direction": "forward",
+        "preprocessing": "cascadia-0.0.7",
+        "vocabulary_source": "canonical MassiveKB (public Cascadia models)",
+        "parity": "passed: 3 variable input shapes",
+        "checkpoint_sha256": "5a5df6108a8ff7cc3948449035cc5dcaea391be7fef533079e6569e412e602f5"
+      }
+    },
+    {
+      "name": "cascadia_astral_tuned",
+      "path": "${WORKSPACE}/MegaPX/models/compact/cascadia_astral_tuned.pt",
+      "sha256": "93ab697c26dae7f2b0bccb5d8115f68df8a4c7284b5ddd2543437c677fcae753",
+      "metadata": {
+        "format": "cascadia-bundle-v1",
+        "frozen": false,
+        "architecture": {
+          "d_model": 512,
+          "n_layers": 9,
+          "dim_feedforward": 1024,
+          "max_charge": 10,
+          "n_tokens": 28
+        },
+        "n_head": 8,
+        "rt_width": 2.0,
+        "torch_version": "2.0.1",
+        "checkpoint": "cascadia_astral_tuned.ckpt",
+        "tokenizer_direction": "forward",
+        "preprocessing": "cascadia-0.0.7",
+        "vocabulary_source": "canonical MassiveKB (public Cascadia models)",
+        "parity": "passed: 3 variable input shapes",
+        "checkpoint_sha256": "753556a87c7d3e1cf1ab4062263cbf6e582db0cdef43951c81e1e368d9ad9005"
+      }
+    }
+  ],
+  "settings": {
+    "mzml": "${WORKSPACE}/demo.mzML",
+    "mzml_sha256": "fc0a6391a7f0e947a106864e1a8bb6dc7a538f8ecc4f74289c6cfc3cd0cdb225",
+    "cpp": "${WORKSPACE}/MegaPX/build_libtorch/megapx_sequence",
+    "cpp_sha256": "e02ec5fbacf59dec002a6e98d602ff5ca596f4c2ba59411612fc42441d90a991",
+    "python": "${CASCADIA_ENV}/bin/python3.10",
+    "python_runner_sha256": "7590a7261d0dcb2559b8a02172b65da31e234232fb57a89ce43f89fb6fbfede7",
+    "platform": "macOS-27.2-arm64-arm-64bit-Mach-O",
+    "threads": 4,
+    "batch_size": 32,
+    "score_threshold": 0.8,
+    "max_charge": 4,
+    "device": "cpu",
+    "python_data_loader_workers": 0,
+    "execution": "sequential; end-to-end process timings; export excluded; one measured run per backend/model",
+    "score_atol": 1e-06,
+    "time_atol": 1e-05,
+    "models": [
+      {
+        "checkpoint": "${WORKSPACE}/cascadia.ckpt",
+        "checkpoint_sha256": "0f5e91413c716b22019699c8cb25655216f9c96d0f2aeb6ec42084bb65652192",
+        "bundle": "${WORKSPACE}/MegaPX/models/cascadia.pt",
+        "bundle_sha256": "7020c93ff7ac075be83fbd44f69d810e11a79c85eda37e1408af497cd784fa0a"
+      },
+      {
+        "checkpoint": "${WORKSPACE}/cascadia_pretrained.ckpt",
+        "checkpoint_sha256": "5a5df6108a8ff7cc3948449035cc5dcaea391be7fef533079e6569e412e602f5",
+        "bundle": "${WORKSPACE}/MegaPX/models/cascadia_pretrained.pt",
+        "bundle_sha256": "957a9690fd557f450dfbf465898a1f2bf6ade74c1178234f18eda543f57ae10b"
+      },
+      {
+        "checkpoint": "${WORKSPACE}/cascadia_astral_tuned.ckpt",
+        "checkpoint_sha256": "753556a87c7d3e1cf1ab4062263cbf6e582db0cdef43951c81e1e368d9ad9005",
+        "bundle": "${WORKSPACE}/MegaPX/models/cascadia_astral_tuned.pt",
+        "bundle_sha256": "5ffad6bb93c8d68438ad7772078496553808a30831a388d6abc09c46c03461d7"
+      }
+    ],
+    "offline_unimod": {
+      "preflight": "passed",
+      "unimod_source": "${CASCADIA_ENV}/lib/python3.10/site-packages/psims/controlled_vocabulary/vendor/unimod_tables.xml.gz",
+      "unimod_xml_sha256": "7b303537f45f8f0d7ddd1e5b19cf59060474eafb18e33bef0b17fef078ef4c38",
+      "writer_rows": 4
+    }
+  },
+  "python_measurements": "Reused unchanged from the completed reference run, not measured again"
+}

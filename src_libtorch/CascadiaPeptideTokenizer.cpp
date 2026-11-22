@@ -1,7 +1,12 @@
 #include "CascadiaPeptideTokenizer.h"
 
 #include <algorithm>
+#include <cctype>
 #include <stdexcept>
+#include <sstream>
+#include <set>
+#include <cmath>
+#include <iomanip>
 
 /*
 * @fn massivekb
@@ -126,4 +131,76 @@ std::vector<std::string> CascadiaPeptideTokenizer::detokenize(
     sequences.push_back(std::move(sequence));
   }
   return sequences;
+}
+
+CascadiaPeptideTokenizer CascadiaPeptideTokenizer::from_bundle(const std::string& tsv) {
+  std::istringstream input(tsv);
+  std::string line;
+  std::getline(input, line);
+  if (line != "#cascadia-bundle-v1")
+    throw std::runtime_error("Missing versioned vocabulary. Re-export the checkpoint with export_cascadia_torchscript.py.");
+  std::vector<std::string> tokens;
+  std::vector<double> masses{0.0};
+  std::set<std::string> seen;
+  while (std::getline(input, line)) {
+    const auto tab = line.find('\t');
+    if (tab == std::string::npos) throw std::runtime_error("Invalid embedded vocabulary row");
+    auto token = line.substr(0, tab);
+    auto mass = std::stod(line.substr(tab + 1));
+    if (token.empty() || !seen.insert(token).second || !std::isfinite(mass))
+      throw std::runtime_error("Invalid embedded token/mass");
+    tokens.push_back(token);
+    masses.push_back(mass);
+  }
+  CascadiaPeptideTokenizer result(std::move(tokens));
+  result.masses_ = std::move(masses);
+  return result;
+}
+
+double CascadiaPeptideTokenizer::peptide_mz(const torch::Tensor& ids, int charge) const {
+  if (charge <= 0 || masses_.size() != reverse_index_.size())
+    throw std::runtime_error("Peptide mass requires bundled vocabulary masses and positive charge");
+  auto values = ids.to(torch::kCPU).to(torch::kInt64).contiguous();
+  const auto* data = values.data_ptr<int64_t>();
+  double mass = 18.0105647;
+  for (int64_t i = 0; i < values.numel(); ++i) {
+    auto id = data[i];
+    if (id == stop_token_id_) break;
+    if (id < 0 || id >= static_cast<int64_t>(masses_.size())) throw std::runtime_error("Token outside vocabulary");
+    mass += masses_[id];
+  }
+  return mass / charge + 1.00727646688;
+}
+
+std::string CascadiaPeptideTokenizer::ssl_sequence(const torch::Tensor& ids) const {
+  auto values = ids.to(torch::kCPU).to(torch::kInt64).contiguous();
+  std::ostringstream out;
+  for (int64_t i = 0; i < values.numel(); ++i) {
+    auto id = values.data_ptr<int64_t>()[i];
+    if (id == stop_token_id_) break;
+    if (id == 0) continue;
+    const auto& token = reverse_index_.at(id);
+    auto left = token.find('['), right = token.rfind(']');
+    if (left == std::string::npos) { out << token; continue; }
+    const auto label = token.substr(left + 1, right - left - 1);
+    // Python leaves numeric mass labels untouched when Unimod has no name match.
+    if (!label.empty() && (label[0] == '+' || label[0] == '-' || std::isdigit(static_cast<unsigned char>(label[0])))) {
+      out << token;
+      continue;
+    }
+    double shift = masses_.at(id);
+    auto prefix = token.substr(0, left);
+    for (char c : prefix) {
+      if (c < 'A' || c > 'Z') continue;
+      auto it = std::find(reverse_index_.begin(), reverse_index_.end(), std::string(1, c));
+      if (it == reverse_index_.end()) throw std::runtime_error("Modified residue lacks base mass");
+      shift -= masses_[std::distance(reverse_index_.begin(), it)];
+    }
+    std::ostringstream formatted;
+    formatted << std::showpos << std::fixed << std::setprecision(2) << shift;
+    auto shift_text = formatted.str();
+    while (shift_text.size() > 2 && shift_text.back() == '0' && shift_text[shift_text.size()-2] != '.') shift_text.pop_back();
+    out << prefix << '[' << shift_text << ']' << token.substr(right+1);
+  }
+  return out.str();
 }

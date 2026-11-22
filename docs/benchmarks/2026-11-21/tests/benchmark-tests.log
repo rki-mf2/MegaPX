@@ -1,0 +1,15 @@
+Command: python3 MegaPX/tests/test_cascadia_benchmark.py
+Exit code: 0
+
+test_agreement_checks_numeric_and_peptide_results (__main__.BenchmarkTests.test_agreement_checks_numeric_and_peptide_results) ... ok
+test_duplicate_keys_are_rejected (__main__.BenchmarkTests.test_duplicate_keys_are_rejected) ... ok
+test_peak_rss_belongs_to_each_child (__main__.BenchmarkTests.test_peak_rss_belongs_to_each_child) ... Running: ${SYSTEM_PYTHON}/bin/python3.15 -c 'x=bytearray(60*1024*1024); print(len(x))'
+Finished: exit=0, elapsed=0.028s, CPU=0.022s, peak RSS=72.875 MiB
+Running: ${SYSTEM_PYTHON}/bin/python3.15 -c 'print('"'"'small'"'"')'
+Finished: exit=0, elapsed=0.021s, CPU=0.018s, peak RSS=12.953 MiB
+ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.055s
+
+OK

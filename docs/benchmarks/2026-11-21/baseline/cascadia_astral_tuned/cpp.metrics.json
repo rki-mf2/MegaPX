@@ -1,0 +1,29 @@
+{
+  "command": [
+    "${WORKSPACE}/MegaPX/build_libtorch/megapx_sequence",
+    "--sequence",
+    "${WORKSPACE}/demo.mzML",
+    "--model",
+    "${WORKSPACE}/MegaPX/models/cascadia_astral_tuned.pt",
+    "--out",
+    "${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia_astral_tuned/cpp",
+    "--threads",
+    "4",
+    "--batch-size",
+    "32",
+    "--score-threshold",
+    "0.8",
+    "--max-charge",
+    "4",
+    "--device",
+    "cpu"
+  ],
+  "shell_command": "${WORKSPACE}/MegaPX/build_libtorch/megapx_sequence --sequence ${WORKSPACE}/demo.mzML --model ${WORKSPACE}/MegaPX/models/cascadia_astral_tuned.pt --out ${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia_astral_tuned/cpp --threads 4 --batch-size 32 --score-threshold 0.8 --max-charge 4 --device cpu",
+  "cwd": "${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia_astral_tuned",
+  "elapsed_seconds": 366.5468297909829,
+  "cpu_seconds": 503.801309,
+  "peak_rss_mib": 3172.1875,
+  "exit_code": 0,
+  "stdout_log": "${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia_astral_tuned/cpp.log",
+  "memory_measurement": "peak process RSS from wait4; host RAM, not GPU VRAM"
+}

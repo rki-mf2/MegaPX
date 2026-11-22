@@ -1,0 +1,25 @@
+{
+  "command": [
+    "${CASCADIA_ENV}/bin/python3.10",
+    "${WORKSPACE}/MegaPX/scripts/run_cascadia_python.py",
+    "sequence",
+    "${WORKSPACE}/demo.mzML",
+    "${WORKSPACE}/cascadia.ckpt",
+    "-o",
+    "${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia/python/predictions",
+    "-b",
+    "32",
+    "-t",
+    "0.8",
+    "-c",
+    "4"
+  ],
+  "shell_command": "${CASCADIA_ENV}/bin/python3.10 ${WORKSPACE}/MegaPX/scripts/run_cascadia_python.py sequence ${WORKSPACE}/demo.mzML ${WORKSPACE}/cascadia.ckpt -o ${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia/python/predictions -b 32 -t 0.8 -c 4",
+  "cwd": "${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia/python",
+  "elapsed_seconds": 1189.7301649169822,
+  "cpu_seconds": 1988.372866,
+  "peak_rss_mib": 2293.734375,
+  "exit_code": 0,
+  "stdout_log": "${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia/python.log",
+  "memory_measurement": "peak process RSS from wait4; host RAM, not GPU VRAM"
+}

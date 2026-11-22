@@ -1,0 +1,11 @@
+Command: python3 MegaPX/tests/test_cascadia_pipeline.py --sequencer MegaPX/build_libtorch/megapx_sequence --bundle MegaPX/models/cascadia.pt --mzml demo.mzML
+Exit code: 0
+
+test_ckpt_requires_export (__main__.PipelineTests.test_ckpt_requires_export) ... ok
+test_search_failure_keeps_sequencing (__main__.PipelineTests.test_search_failure_keeps_sequencing) ... ok
+test_sequence_outputs_and_search_handoff (__main__.PipelineTests.test_sequence_outputs_and_search_handoff) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 3.011s
+
+OK

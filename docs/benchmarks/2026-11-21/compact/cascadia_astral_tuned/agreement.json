@@ -1,0 +1,24 @@
+{
+  "agreement": true,
+  "python_rows": 35,
+  "cpp_rows": 35,
+  "shared_rows": 35,
+  "python_only": [],
+  "cpp_only": [],
+  "categorical_mismatches": [],
+  "numeric_mismatches": [],
+  "row_order_equal": true,
+  "maximum_absolute_errors": {
+    "score": 2.949999999835029e-08,
+    "retention-time": 8.899999990319429e-07,
+    "start-time": 4.958828014878236e-09,
+    "end-time": 4.841638201469323e-09
+  },
+  "score_absolute_tolerance": 1e-06,
+  "time_absolute_tolerance_minutes": 1e-05,
+  "file_paths_text_equal": true,
+  "score_float32_roundtrip_equal": true,
+  "retention_time_float32_roundtrip_equal": true,
+  "byte_identical": false,
+  "comparison_rule": "Exact candidate keys, order, peptide/modification strings and score types; numeric absolute tolerances; file column matched by basename"
+}

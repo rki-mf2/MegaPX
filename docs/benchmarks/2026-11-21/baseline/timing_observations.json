@@ -1,0 +1,8 @@
+{
+  "model": "cascadia_pretrained",
+  "observation": "Progress-bar wall time contained long host pauses; performance-counter timing excludes system sleep on this macOS host. CPU time and output agreement are retained. An idle-sleep assertion was enabled during the remainder of this run; future benchmark run commands enable it automatically.",
+  "approximate_wall_seconds_from_log_and_metrics_file_creation_times": 7201.2864146232605,
+  "measured_performance_counter_seconds": 1690.7487791249878,
+  "cpu_seconds": 2773.870195,
+  "wall_estimate_note": "File creation timestamps approximate launch and metrics write, not instrumented UTC timestamps. New runs record explicit UTC/wall durations as well."
+}
