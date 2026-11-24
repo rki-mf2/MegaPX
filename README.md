@@ -52,6 +52,8 @@ conda install conda-forge::gcc
 conda install conda-forge::clang
 conda install -c conda-forge zlib
 ```
+For optional Cascadia sequencing, follow the [PyTorch or standalone LibTorch setup](src_libtorch/README.md#build-the-standalone-sequencer). It covers missing Python `torch` and CMake `TorchConfig.cmake` errors.
+
 Building MegaPX from source:   
 ```
 git clone https://github.com/lutfia95/MegaPX.git   
@@ -115,11 +117,11 @@ measurements, commands, environment details and local test results.
 Linux sanitizer builds run AddressSanitizer and UndefinedBehaviorSanitizer.
 With the prebuilt macOS Torch package, local builds use UndefinedBehaviorSanitizer
 because a local ASan build stalled during startup; Linux CI is configured to cover ASan.
-Configure a separate build:
+Set `TORCH_DIR` using the [sequencer build instructions](src_libtorch/README.md#build-the-standalone-sequencer), then configure a separate build:
 
 ```bash
 cmake -S src_libtorch -B build_sanitizers \
-  -DCMAKE_PREFIX_PATH="$(python -c 'import torch; print(torch.utils.cmake_prefix_path)')" \
+  -DTorch_DIR="$TORCH_DIR" \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCASCADIA_ENABLE_SANITIZERS=ON
 cmake --build build_sanitizers -j 2
 ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 \

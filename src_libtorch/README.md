@@ -8,14 +8,54 @@ The main MegaPX executable also accepts `--sequence` when built with
 
 ## Build the standalone sequencer
 
-Use the LibTorch libraries from the same PyTorch installation used for export.
-For example, inside `cascadia_env`, from the MegaPX repository:
+From the MegaPX repository root, choose one of the following ways to locate
+`TorchConfig.cmake`. Use the Torch version used to export your model. The
+repository benchmarks used Torch 2.0.1.
+
+**PyTorch in a Python environment.** Activate the environment that contains
+PyTorch and print the interpreter path and Torch version:
 
 ```bash
+python -c 'import sys; print(sys.executable)'
+python -c 'import torch; print(torch.__version__)'
+```
+
+If you see `ModuleNotFoundError: No module named 'torch'`, that interpreter
+cannot import PyTorch. In the old inline CMake command, this left
+`CMAKE_PREFIX_PATH` empty and CMake then reported a missing `TorchConfig.cmake`.
+Activate your Cascadia export environment if it already has Torch. To install
+Torch in `MegaPX_env` instead, the Linux x86_64 CPU setup used by sequencer CI
+uses Python 3.10 and the following wheel:
+
+```bash
+conda activate MegaPX_env
+python -m pip install 'torch==2.0.1' --index-url https://download.pytorch.org/whl/cpu
+```
+
+Resolve the package directory using that same interpreter:
+
+```bash
+TORCH_DIR="$(python -c 'import torch; print(torch.utils.cmake_prefix_path + "/Torch")')"
+```
+
+**Standalone LibTorch SDK.** If you already have an exported model, you can
+build and run the sequencer without installing Python Torch. Extract a
+LibTorch distribution matching your platform, CPU or CUDA target, and model
+export version. Set the absolute path to the directory containing
+`TorchConfig.cmake`. Replace the example path with your SDK location:
+
+```bash
+TORCH_DIR="/absolute/path/to/libtorch/share/cmake/Torch"
+```
+
+**Configure, build and test.** Run this in the same shell after either setup.
+The file check stops the build if the selected package directory is wrong.
+
+```bash
+test -f "$TORCH_DIR/TorchConfig.cmake" &&
 cmake -S src_libtorch -B build_libtorch \
-  -DCMAKE_PREFIX_PATH="$(python -c 'import torch; print(torch.utils.cmake_prefix_path)')" \
-  -DCMAKE_BUILD_TYPE=Release
-cmake --build build_libtorch -j 4
+  -DTorch_DIR="$TORCH_DIR" -DCMAKE_BUILD_TYPE=Release &&
+cmake --build build_libtorch -j 4 &&
 ctest --test-dir build_libtorch --output-on-failure
 ```
 
@@ -27,7 +67,7 @@ To add sequencing to the main MegaPX executable, configure its existing build:
 
 ```bash
 cmake -S src -B build -DMEGAPX_WITH_CASCADIA=ON \
-  -DCMAKE_PREFIX_PATH="$(python -c 'import torch; print(torch.utils.cmake_prefix_path)')"
+  -DTorch_DIR="$TORCH_DIR"
 cmake --build build -j 4
 ```
 
