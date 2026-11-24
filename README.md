@@ -143,6 +143,23 @@ See [Cascadia build, export and usage](src_libtorch/README.md), including the
 [complete loader option table](src_libtorch/README.md#complete-command-line-reference)
 and [benchmark/measurement commands](src_libtorch/README.md#reproduce-all-three-pythonc-benchmarks).
 
+#### Download the Cascadia models
+
+[Download the ready-to-use Cascadia models from Google Drive](https://drive.google.com/file/d/1ZIfDmMLLcKzo-k2G4qO9dDwa1LrGM2KU/view?usp=share_link).
+Extract the archive in the MegaPX repository root. It contains three Cascadia
+checkpoints exported as TorchScript for the C++ sequencer. Each checkpoint
+has a compact export and a frozen export with the same weights.
+
+| Model | Compact export (lower peak RAM) | Frozen export |
+|---|---|---|
+| Standard Cascadia | `cascadia.pt` | `cascadia_frozen.pt` |
+| Pretrained Cascadia | `cascadia_pretrained.pt` | `cascadia_pretrained_frozen.pt` |
+| Astral-tuned Cascadia | `cascadia_astral_tuned.pt` | `cascadia_astral_tuned_frozen.pt` |
+
+Each `.pt` file has a matching `.pt.json` with the source checkpoint name,
+SHA-256 and export settings. Pass the `.pt` file to `--model`, as in this
+example using the standard compact model.
+
 ```bash
 ./build_libtorch/megapx_sequence \
   --sequence ../demo.mzML --model models/cascadia.pt --out results/demo
