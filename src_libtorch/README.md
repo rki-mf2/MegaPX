@@ -8,23 +8,30 @@ The main MegaPX executable also accepts `--sequence` when built with
 
 ## Build the standalone sequencer
 
-Run these commands from the MegaPX repository root. The standalone build
+**Linux x86_64 and ARM64 automatic setup.** Run this block from the MegaPX repository root. The standalone build
 requires CMake 3.18+, a C++17 compiler and zlib development files.
 
 ```bash
-cmake -S src_libtorch -B build_libtorch -DCMAKE_BUILD_TYPE=Release
+cmake -S src_libtorch -B build_libtorch -DCMAKE_BUILD_TYPE=Release \
+  -U Torch_DIR -DCASCADIA_DOWNLOAD_LIBTORCH=ON
 cmake --build build_libtorch -j 4
 ctest --test-dir build_libtorch --output-on-failure
 ```
 
-CMake first looks for an installed Torch package. On Linux x86_64, if it
-cannot find one, it downloads the official CPU LibTorch 2.0.1 SDK (C++11
-ABI), checks its SHA-256 and reuses it in the build directory. The first
+CMake first looks for an installed Torch package. On Linux x86_64 or ARM64, if it
+cannot find one, it downloads Torch 2.0.1 for CPU, checks its SHA-256 and
+reuses it in the build directory. On x86_64 it uses the C++11 ABI SDK.
+On ARM64 (`uname -m` reports `aarch64` or `arm64`), CMake extracts the
+C++ SDK from the official ARM64 wheel without running Python or pip. The first
 download needs internet access. Building and sequencing an exported model
 require no Python Torch installation. Python is used for checkpoint export.
 
-For macOS, other architectures, CUDA, or a different export version, supply
-a compatible SDK. For an offline build, configure with its absolute path:
+The configure command also recovers an existing build directory after an
+offline attempt by clearing the cached Torch path and enabling downloads.
+
+**Alternative for an installed SDK.** Use this configuration only when you
+already have LibTorch installed, for example for macOS, CUDA or offline use.
+Replace the example path with the directory containing your `TorchConfig.cmake`:
 
 ```bash
 cmake -S src_libtorch -B build_libtorch -DCMAKE_BUILD_TYPE=Release \
@@ -56,6 +63,8 @@ cmake --build build -j 4
 The main build still needs MegaPX's existing SeqAn3, HIBF, OpenMP and other
 search dependencies. Use a LibTorch build with the C++ standard-library ABI
 matching the search dependencies (normally the cxx11-ABI build on Linux).
+The ARM64 wheel uses the old libstdc++ ABI. For an integrated ARM64 build
+with C++11 ABI search dependencies, supply a matching SDK via `Torch_DIR`.
 The standalone sequencer can also call an already-built MegaPX executable.
 
 ## Export each checkpoint once

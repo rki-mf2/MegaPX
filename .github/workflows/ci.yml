@@ -22,11 +22,15 @@ jobs:
         run: python tests/test_cascadia_benchmark.py
 
   native-tests:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
+        runner: [ubuntu-22.04]
         sanitizers: ['OFF', 'ON']
+        include:
+          - runner: ubuntu-22.04-arm
+            sanitizers: 'OFF'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

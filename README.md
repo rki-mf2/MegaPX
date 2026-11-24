@@ -52,7 +52,7 @@ conda install conda-forge::gcc
 conda install conda-forge::clang
 conda install -c conda-forge zlib
 ```
-For optional Cascadia sequencing on Linux x86_64, CMake can download the CPU LibTorch SDK automatically. See the [sequencer build instructions and local SDK options](src_libtorch/README.md#build-the-standalone-sequencer).
+For optional Cascadia sequencing on Linux x86_64 or ARM64, CMake can download the CPU LibTorch SDK automatically. See the [sequencer build instructions and local SDK options](src_libtorch/README.md#build-the-standalone-sequencer).
 
 Building MegaPX from source:   
 ```

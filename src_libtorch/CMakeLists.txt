@@ -1,26 +1,41 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 project(torch_loader LANGUAGES CXX)
 
-option(CASCADIA_DOWNLOAD_LIBTORCH "Download the Linux x86_64 CPU SDK if Torch is missing" ON)
+option(CASCADIA_DOWNLOAD_LIBTORCH "Download the Linux CPU SDK if Torch is missing" ON)
 find_package(Torch CONFIG QUIET)
 if(NOT Torch_FOUND)
-  if(NOT CASCADIA_DOWNLOAD_LIBTORCH OR NOT CMAKE_SYSTEM_NAME STREQUAL "Linux"
-     OR NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
-    message(FATAL_ERROR "Set Torch_DIR to the directory containing TorchConfig.cmake. "
-      "Automatic LibTorch downloads require Linux x86_64 and CASCADIA_DOWNLOAD_LIBTORCH=ON.")
+  string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" torch_processor)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND torch_processor MATCHES "^(x86_64|amd64)$")
+    set(torch_url "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcpu.zip")
+    set(torch_hash 137a842d1cf1e9196b419390133a1623ef92f8f84dc7a072f95ada684f394afd)
+    set(torch_package_root ".")
+  elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND torch_processor MATCHES "^(aarch64|arm64)$")
+    # The wheel contains the C++ SDK under torch/ and its bundled libraries alongside it.
+    set(torch_url "https://download-r2.pytorch.org/whl/torch-2.0.1-cp310-cp310-manylinux2014_aarch64.whl")
+    set(torch_hash 359bfaad94d1cda02ab775dc1cc386d585712329bb47b8741607ef6ef4950747)
+    set(torch_package_root "torch")
+  else()
+    message(FATAL_ERROR "No Torch SDK found for ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}. "
+      "Automatic downloads support Linux x86_64 and ARM64. Set Torch_DIR to the directory containing TorchConfig.cmake.")
+  endif()
+  if(NOT CASCADIA_DOWNLOAD_LIBTORCH)
+    message(FATAL_ERROR "No Torch SDK found and CASCADIA_DOWNLOAD_LIBTORCH is OFF in this build directory. "
+      "Reconfigure with -U Torch_DIR -DCASCADIA_DOWNLOAD_LIBTORCH=ON to enable the download, "
+      "or set Torch_DIR to an installed SDK directory containing TorchConfig.cmake.")
   endif()
 
   include(FetchContent)
   if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
   endif()
-  message(STATUS "Fetching LibTorch 2.0.1 CPU (Linux x86_64, C++11 ABI)")
+  message(STATUS "Fetching LibTorch 2.0.1 CPU (Linux ${torch_processor})")
   FetchContent_Declare(cascadia_libtorch
-    URL "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcpu.zip"
-    URL_HASH SHA256=137a842d1cf1e9196b419390133a1623ef92f8f84dc7a072f95ada684f394afd
+    URL "${torch_url}"
+    DOWNLOAD_NAME libtorch-2.0.1-${torch_processor}.zip
+    URL_HASH SHA256=${torch_hash}
     TLS_VERIFY ON)
   FetchContent_MakeAvailable(cascadia_libtorch)
-  find_package(Torch CONFIG REQUIRED PATHS "${cascadia_libtorch_SOURCE_DIR}" NO_DEFAULT_PATH)
+  find_package(Torch CONFIG REQUIRED PATHS "${cascadia_libtorch_SOURCE_DIR}/${torch_package_root}" NO_DEFAULT_PATH)
 endif()
 find_package(ZLIB REQUIRED)
 
