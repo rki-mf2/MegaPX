@@ -1,7 +1,27 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 project(torch_loader LANGUAGES CXX)
 
-find_package(Torch REQUIRED)
+option(CASCADIA_DOWNLOAD_LIBTORCH "Download the Linux x86_64 CPU SDK if Torch is missing" ON)
+find_package(Torch CONFIG QUIET)
+if(NOT Torch_FOUND)
+  if(NOT CASCADIA_DOWNLOAD_LIBTORCH OR NOT CMAKE_SYSTEM_NAME STREQUAL "Linux"
+     OR NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
+    message(FATAL_ERROR "Set Torch_DIR to the directory containing TorchConfig.cmake. "
+      "Automatic LibTorch downloads require Linux x86_64 and CASCADIA_DOWNLOAD_LIBTORCH=ON.")
+  endif()
+
+  include(FetchContent)
+  if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+  endif()
+  message(STATUS "Fetching LibTorch 2.0.1 CPU (Linux x86_64, C++11 ABI)")
+  FetchContent_Declare(cascadia_libtorch
+    URL "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcpu.zip"
+    URL_HASH SHA256=137a842d1cf1e9196b419390133a1623ef92f8f84dc7a072f95ada684f394afd
+    TLS_VERIFY ON)
+  FetchContent_MakeAvailable(cascadia_libtorch)
+  find_package(Torch CONFIG REQUIRED PATHS "${cascadia_libtorch_SOURCE_DIR}" NO_DEFAULT_PATH)
+endif()
 find_package(ZLIB REQUIRED)
 
 add_library(cascadia_runtime STATIC

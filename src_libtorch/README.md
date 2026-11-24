@@ -8,66 +8,48 @@ The main MegaPX executable also accepts `--sequence` when built with
 
 ## Build the standalone sequencer
 
-From the MegaPX repository root, choose one of the following ways to locate
-`TorchConfig.cmake`. Use the Torch version used to export your model. The
-repository benchmarks used Torch 2.0.1.
-
-**PyTorch in a Python environment.** Activate the environment that contains
-PyTorch and print the interpreter path and Torch version:
+Run these commands from the MegaPX repository root. The standalone build
+requires CMake 3.18+, a C++17 compiler and zlib development files.
 
 ```bash
-python -c 'import sys; print(sys.executable)'
-python -c 'import torch; print(torch.__version__)'
-```
-
-If you see `ModuleNotFoundError: No module named 'torch'`, that interpreter
-cannot import PyTorch. In the old inline CMake command, this left
-`CMAKE_PREFIX_PATH` empty and CMake then reported a missing `TorchConfig.cmake`.
-Activate your Cascadia export environment if it already has Torch. To install
-Torch in `MegaPX_env` instead, the Linux x86_64 CPU setup used by sequencer CI
-uses Python 3.10 and the following wheel:
-
-```bash
-conda activate MegaPX_env
-python -m pip install 'torch==2.0.1' --index-url https://download.pytorch.org/whl/cpu
-```
-
-Resolve the package directory using that same interpreter:
-
-```bash
-TORCH_DIR="$(python -c 'import torch; print(torch.utils.cmake_prefix_path + "/Torch")')"
-```
-
-**Standalone LibTorch SDK.** If you already have an exported model, you can
-build and run the sequencer without installing Python Torch. Extract a
-LibTorch distribution matching your platform, CPU or CUDA target, and model
-export version. Set the absolute path to the directory containing
-`TorchConfig.cmake`. Replace the example path with your SDK location:
-
-```bash
-TORCH_DIR="/absolute/path/to/libtorch/share/cmake/Torch"
-```
-
-**Configure, build and test.** Run this in the same shell after either setup.
-The file check stops the build if the selected package directory is wrong.
-
-```bash
-test -f "$TORCH_DIR/TorchConfig.cmake" &&
-cmake -S src_libtorch -B build_libtorch \
-  -DTorch_DIR="$TORCH_DIR" -DCMAKE_BUILD_TYPE=Release &&
-cmake --build build_libtorch -j 4 &&
+cmake -S src_libtorch -B build_libtorch -DCMAKE_BUILD_TYPE=Release
+cmake --build build_libtorch -j 4
 ctest --test-dir build_libtorch --output-on-failure
 ```
 
-This build needs CMake, a C++17 compiler, LibTorch, and zlib. It does not need
-MegaPX's SeqAn/HIBF search dependencies. C++17 also avoids compatibility errors
-between the old PyTorch 2.0 headers and newer macOS libc++ headers.
+CMake first looks for an installed Torch package. On Linux x86_64, if it
+cannot find one, it downloads the official CPU LibTorch 2.0.1 SDK (C++11
+ABI), checks its SHA-256 and reuses it in the build directory. The first
+download needs internet access. Building and sequencing an exported model
+require no Python Torch installation. Python is used for checkpoint export.
 
-To add sequencing to the main MegaPX executable, configure its existing build:
+For macOS, other architectures, CUDA, or a different export version, supply
+a compatible SDK. For an offline build, configure with its absolute path:
 
 ```bash
-cmake -S src -B build -DMEGAPX_WITH_CASCADIA=ON \
-  -DTorch_DIR="$TORCH_DIR"
+cmake -S src_libtorch -B build_libtorch -DCMAKE_BUILD_TYPE=Release \
+  -DTorch_DIR=/absolute/path/to/libtorch/share/cmake/Torch \
+  -DCASCADIA_DOWNLOAD_LIBTORCH=OFF
+```
+
+You can also use an existing Python environment's PyTorch installation.
+Activate the environment used for export, then run:
+
+```bash
+torch_prefix="$(python -c 'import torch; print(torch.utils.cmake_prefix_path)')" &&
+cmake -S src_libtorch -B build_libtorch -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_PREFIX_PATH="$torch_prefix"
+```
+
+If this prints `ModuleNotFoundError: No module named 'torch'`, use the
+automatic Linux build above, supply a standalone SDK, or activate the
+environment containing PyTorch.
+
+To include sequencing in the main MegaPX executable, enable Cascadia.
+The same package discovery and download options apply:
+
+```bash
+cmake -S src -B build -DMEGAPX_WITH_CASCADIA=ON
 cmake --build build -j 4
 ```
 

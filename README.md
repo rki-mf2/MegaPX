@@ -52,7 +52,7 @@ conda install conda-forge::gcc
 conda install conda-forge::clang
 conda install -c conda-forge zlib
 ```
-For optional Cascadia sequencing, follow the [PyTorch or standalone LibTorch setup](src_libtorch/README.md#build-the-standalone-sequencer). It covers missing Python `torch` and CMake `TorchConfig.cmake` errors.
+For optional Cascadia sequencing on Linux x86_64, CMake can download the CPU LibTorch SDK automatically. See the [sequencer build instructions and local SDK options](src_libtorch/README.md#build-the-standalone-sequencer).
 
 Building MegaPX from source:   
 ```
@@ -104,8 +104,7 @@ python tests/test_cascadia_pipeline.py \
 ```
 
 [Sequencer CI](.github/workflows/ci.yml) runs benchmark unit tests and native
-CTest with and without Address/UndefinedBehavior sanitizers. It downloads a CPU
-Torch wheel, not trained checkpoints. The prebuilt Torch dependency is not
+CTest with and without Address/UndefinedBehavior sanitizers. CMake downloads the CPU LibTorch SDK. The prebuilt Torch dependency is not
 itself sanitizer-instrumented; leak checking of its process-lifetime caches is
 disabled. Full three-checkpoint agreement/performance tests are run locally
 using the [reproduction script](scripts/reproduce_benchmark.sh).
@@ -117,11 +116,10 @@ measurements, commands, environment details and local test results.
 Linux sanitizer builds run AddressSanitizer and UndefinedBehaviorSanitizer.
 With the prebuilt macOS Torch package, local builds use UndefinedBehaviorSanitizer
 because a local ASan build stalled during startup; Linux CI is configured to cover ASan.
-Set `TORCH_DIR` using the [sequencer build instructions](src_libtorch/README.md#build-the-standalone-sequencer), then configure a separate build:
+Configure a separate sanitizer build. On macOS, include the local Torch package path described in the [sequencer build instructions](src_libtorch/README.md#build-the-standalone-sequencer).
 
 ```bash
 cmake -S src_libtorch -B build_sanitizers \
-  -DTorch_DIR="$TORCH_DIR" \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCASCADIA_ENABLE_SANITIZERS=ON
 cmake --build build_sanitizers -j 2
 ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 \
