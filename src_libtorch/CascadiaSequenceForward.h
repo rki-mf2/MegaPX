@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 
 #include "CascadiaModelConfig.h"
 #include "CascadiaPeptideTokenizer.h"
@@ -50,6 +51,8 @@ class CascadiaSequenceForward {
 * @return True when the model is loaded.
 */
   bool loaded() const;
+  const CascadiaPeptideTokenizer& tokenizer() const { return *tokenizer_; }
+  const std::string& metadata() const { return metadata_; }
 
 /*
 * @fn forward
@@ -133,4 +136,6 @@ class CascadiaSequenceForward {
   CascadiaModelConfig config_;
   torch::jit::script::Module module_;
   bool loaded_ = false;
+  std::optional<CascadiaPeptideTokenizer> tokenizer_;
+  std::string metadata_;
 };

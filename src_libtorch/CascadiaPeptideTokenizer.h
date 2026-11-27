@@ -15,6 +15,9 @@ class CascadiaPeptideTokenizer {
 * @return CascadiaPeptideTokenizer initialized with the MassiveKB token set.
 */
   static CascadiaPeptideTokenizer massivekb();
+  static CascadiaPeptideTokenizer from_bundle(const std::string& tsv);
+  std::string ssl_sequence(const torch::Tensor& ids) const;
+  double peptide_mz(const torch::Tensor& ids, int charge) const;
 
 /*
 * @fn stop_token_id
@@ -57,4 +60,5 @@ class CascadiaPeptideTokenizer {
 
   std::vector<std::string> reverse_index_;
   int64_t stop_token_id_ = 0;
+  std::vector<double> masses_;
 };

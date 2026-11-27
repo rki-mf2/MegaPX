@@ -1,0 +1,54 @@
+name: Sequencer and sanitizers CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark-tests:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Test agreement checking and per-process memory measurement
+        run: python tests/test_cascadia_benchmark.py
+
+  native-tests:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-22.04]
+        sanitizers: ['OFF', 'ON']
+        include:
+          - runner: ubuntu-22.04-arm
+            sanitizers: 'OFF'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build zlib1g-dev
+      - name: Configure standalone native tests
+        run: |
+          cmake -S src_libtorch -B build_libtorch -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCASCADIA_ENABLE_SANITIZERS=${{ matrix.sanitizers }}
+      - name: Build
+        run: cmake --build build_libtorch --parallel 2
+      - name: Run CTest
+        env:
+          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: ctest --test-dir build_libtorch --output-on-failure

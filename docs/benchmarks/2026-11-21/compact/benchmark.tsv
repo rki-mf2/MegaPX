@@ -1,0 +1,7 @@
+model	backend	elapsed_seconds	cpu_seconds	peak_rss_mib	exit_code	agreement	rows	stdout_log
+cascadia	cpp	362.631838833011	502.30713699999995	847.90625	0	True	220	${WORKSPACE}/MegaPX/results/benchmark_compact/cascadia/cpp.log
+cascadia	python	1189.7301649169822	1988.372866	2293.734375	0	True	220	${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia/python.log
+cascadia_pretrained	cpp	361.96647191702505	501.57457500000004	870.265625	0	True	40	${WORKSPACE}/MegaPX/results/benchmark_compact/cascadia_pretrained/cpp.log
+cascadia_pretrained	python	1690.7487791249878	2773.870195	2204.734375	0	True	40	${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia_pretrained/python.log
+cascadia_astral_tuned	cpp	363.3880701669841	503.494192	963.375	0	True	35	${WORKSPACE}/MegaPX/results/benchmark_compact/cascadia_astral_tuned/cpp.log
+cascadia_astral_tuned	python	1665.8677065419906	2751.465158	2304.390625	0	True	35	${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia_astral_tuned/python.log

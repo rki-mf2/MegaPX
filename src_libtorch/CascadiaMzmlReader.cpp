@@ -14,6 +14,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <tuple>
 
 namespace {
 
@@ -181,7 +182,7 @@ std::vector<unsigned char> base64_decode(const std::string& input) {
   }();
 
   std::vector<unsigned char> bytes;
-  int value = 0;
+  unsigned int value = 0;
   int bits = -8;
   for (const unsigned char ch : input) {
     if (ch == '=') {
@@ -277,6 +278,10 @@ std::vector<double> decode_binary_array(const std::string& binary_xml,
   const bool is_float64 = has_name(binary_xml, "64-bit float");
   const bool is_float32 = has_name(binary_xml, "32-bit float");
   const bool is_zlib = has_name(binary_xml, "zlib compression");
+  if (has_name(binary_xml, "MS-Numpress linear prediction compression") ||
+      has_name(binary_xml, "MS-Numpress positive integer compression") ||
+      has_name(binary_xml, "MS-Numpress short logged float compression"))
+    throw std::runtime_error("MS-Numpress mzML is not supported; convert to zlib 32/64-bit mzML");
   const auto binary_text = between(binary_xml, "<binary>", "</binary>");
   if (binary_text.empty()) {
     return {};
@@ -292,6 +297,8 @@ std::vector<double> decode_binary_array(const std::string& binary_xml,
     throw std::runtime_error("Unsupported mzML binary precision.");
   }
 
+  if (bytes.size() != default_array_length * bytes_per_value)
+    throw std::runtime_error("mzML binary array length disagrees with defaultArrayLength");
   const std::size_t count = bytes.size() / bytes_per_value;
   std::vector<double> values;
   values.reserve(count);
@@ -349,6 +356,22 @@ std::vector<std::pair<double, double>> top_peaks_sorted_by_mz(
   return peaks;
 }
 
+// NumPy's contiguous float32 sum uses this pairwise reduction order. Cascadia's
+// high-frequency intensity encoder is sensitive to even a few input ULPs.
+float numpy_sum(const float* a, std::size_t n) {
+  if (n < 8) { float result = -0.0F; for (std::size_t i = 0; i < n; ++i) result += a[i]; return result; }
+  if (n <= 128) {
+    float r[8]; for (int j = 0; j < 8; ++j) r[j] = a[j];
+    std::size_t i = 8;
+    for (; i < n - n % 8; i += 8) for (int j = 0; j < 8; ++j) r[j] += a[i+j];
+    float result = ((r[0]+r[1])+(r[2]+r[3])) + ((r[4]+r[5])+(r[6]+r[7]));
+    for (; i < n; ++i) result += a[i];
+    return result;
+  }
+  auto half = n / 2; half -= half % 8;
+  return numpy_sum(a, half) + numpy_sum(a + half, n - half);
+}
+
 struct Center {
   double mz = 0.0;
   double rt = 0.0;
@@ -390,8 +413,14 @@ std::vector<CascadiaMzmlReader::Spectrum> CascadiaMzmlReader::read(
     Spectrum spectrum;
     spectrum.id = attr_value(open_tag, "id");
     spectrum.ms_level = parse_int_or(find_cv_value(block, "ms level"), 0);
-    spectrum.retention_time_seconds =
-        60.0 * parse_double_or(find_cv_value(block, "scan start time"), 0.0);
+    const auto rt_pos = block.find("name=\"scan start time\"");
+    if (rt_pos == std::string::npos) throw std::runtime_error("mzML spectrum lacks scan start time");
+    const auto rt_begin = block.rfind('<', rt_pos);
+    const auto rt_tag = block.substr(rt_begin, block.find('>', rt_pos) - rt_begin + 1);
+    const auto rt_unit = attr_value(rt_tag, "unitAccession");
+    if (rt_unit != "UO:0000031" && rt_unit != "UO:0000010")
+      throw std::runtime_error("Unsupported scan time unit (expected minute or second)");
+    spectrum.retention_time_seconds = (rt_unit == "UO:0000031" ? 60.0 : 1.0) * parse_double_or(attr_value(rt_tag, "value"));
 
     if (spectrum.ms_level == 2) {
       spectrum.isolation_target_mz =
@@ -434,11 +463,14 @@ std::vector<CascadiaMzmlReader::Spectrum> CascadiaMzmlReader::read(
       }
     }
 
-    if (!spectrum.mz.empty() && spectrum.mz.size() == spectrum.intensity.size()) {
+    if (spectrum.mz.size() != spectrum.intensity.size())
+      throw std::runtime_error("mzML m/z and intensity lengths differ");
+    if (spectrum.ms_level == 1 || spectrum.ms_level == 2) {
       spectra.push_back(std::move(spectrum));
     }
   }
 
+  if (spectra.empty()) throw std::runtime_error("No readable spectra in mzML input");
   return spectra;
 }
 
@@ -455,6 +487,8 @@ std::vector<CascadiaMzmlReader::AugmentedSpectrum>
 CascadiaMzmlReader::build_augmented_spectra(
     const std::vector<Spectrum>& spectra,
     const Options& options) const {
+  if (options.max_charge < 2 || options.scan_width < 1 || options.top_n < 1)
+    throw std::runtime_error("max_charge >= 2, scan_width >= 1 and top_n >= 1 are required");
   std::vector<Center> centers;
   double previous_ms1_rt = 0.0;
   double cycle_time = 0.0;
@@ -477,14 +511,46 @@ CascadiaMzmlReader::build_augmented_spectra(
   }
   const double time_width = (options.scan_width + 1) * cycle_time;
 
+  std::vector<std::pair<double, std::size_t>> times;
+  for (std::size_t i = 0; i < spectra.size(); ++i) times.emplace_back(spectra[i].retention_time_seconds, i);
+  std::sort(times.begin(), times.end());
+  auto neighbors = [&](double rt) {
+    std::vector<std::size_t> result;
+    auto it = std::lower_bound(times.begin(), times.end(), std::make_pair(rt - time_width, std::size_t(0)));
+    for (; it != times.end() && it->first < rt + time_width; ++it) result.push_back(it->second);
+    std::sort(result.begin(), result.end());
+    return result;
+  };
+  // Python populates one dict per 50,000 MS2 centers. Its insertion order is
+  // first matching source scan, then RT bin, m/z bin, and center within the bin.
+  std::vector<std::pair<std::tuple<std::size_t, std::size_t, int, int, std::size_t>, Center>> ranked;
+  for (std::size_t i = 0; i < centers.size(); ++i) {
+    const auto& c = centers[i];
+    for (auto j : neighbors(c.rt)) {
+      const auto& spec = spectra[j];
+      const int rb = static_cast<int>(spec.retention_time_seconds / 10);
+      const int cb = static_cast<int>(c.rt / 10);
+      if ((cb != rb - 1 && cb != rb) || std::abs(c.rt - spec.retention_time_seconds) >= time_width) continue;
+      if (spec.ms_level == 2 && !(c.mz > spec.isolation_target_mz - spec.isolation_lower_offset && c.mz < spec.isolation_target_mz + spec.isolation_upper_offset)) continue;
+      if (spec.ms_level != 1 && spec.ms_level != 2) continue;
+      ranked.push_back({{i / 50000, j, cb, static_cast<int>(c.mz / 10), i}, c});
+      break;
+    }
+  }
+  std::sort(ranked.begin(), ranked.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
+  std::vector<Center> ordered;
+  for (const auto& entry : ranked) ordered.push_back(entry.second);
   std::vector<AugmentedSpectrum> augmented;
-  for (const auto& center : centers) {
+  for (const auto& center : ordered) {
     std::vector<std::pair<double, std::vector<std::pair<double, double>>>> ms2;
     std::vector<std::pair<double, std::vector<std::pair<double, double>>>> ms1;
 
-    for (const auto& spectrum : spectra) {
+    for (auto source_index : neighbors(center.rt)) {
+      const auto& spectrum = spectra[source_index];
       const double rt_delta = spectrum.retention_time_seconds - center.rt;
-      if (std::abs(rt_delta) >= time_width) {
+      const int center_bin = static_cast<int>(center.rt / 10);
+      const int scan_bin = static_cast<int>(spectrum.retention_time_seconds / 10);
+      if ((center_bin != scan_bin - 1 && center_bin != scan_bin) || std::abs(rt_delta) >= time_width) {
         continue;
       }
 
@@ -512,15 +578,16 @@ CascadiaMzmlReader::build_augmented_spectra(
     const auto nearest = [](const auto& lhs, const auto& rhs) {
       return std::abs(lhs.first) < std::abs(rhs.first);
     };
-    std::sort(ms1.begin(), ms1.end(), nearest);
-    std::sort(ms2.begin(), ms2.end(), nearest);
+    std::stable_sort(ms1.begin(), ms1.end(), nearest);
+    std::stable_sort(ms2.begin(), ms2.end(), nearest);
     ms1.resize(std::min<std::size_t>(options.scan_width, ms1.size()));
     ms2.resize(std::min<std::size_t>(options.scan_width, ms2.size()));
 
     const double ms1_window = std::max(center.lower_offset, center.upper_offset);
-    for (int charge = 1; charge <= options.max_charge; ++charge) {
+    for (int charge = 2; charge <= options.max_charge; ++charge) {
       AugmentedSpectrum item;
       item.precursor_mz = center.mz;
+      item.isolation_width = center.lower_offset + center.upper_offset;
       item.charge = charge;
       item.retention_time_seconds = center.rt;
 
@@ -541,7 +608,16 @@ CascadiaMzmlReader::build_augmented_spectra(
         }
       }
 
-      if (!item.peaks.empty()) {
+      // Installed Cascadia additionally root-scales the combined intensities
+      // then divides by their L1 norm in its dataset preprocessing.
+      auto sorted_peaks = item.peaks;
+      std::stable_sort(sorted_peaks.begin(), sorted_peaks.end(), [](const auto& a, const auto& b) { return a[0] < b[0]; });
+      for (std::size_t i = 0; i < item.peaks.size(); ++i) { item.peaks[i][0] = sorted_peaks[i][0]; item.peaks[i][1] = sorted_peaks[i][1]; }
+      std::vector<float> intensities;
+      for (auto& peak : item.peaks) { peak[1] = static_cast<float>(std::pow(static_cast<double>(peak[1]), 0.5)); intensities.push_back(std::sqrt(peak[1] * peak[1])); }
+      float total_intensity = numpy_sum(intensities.data(), intensities.size());
+      if (total_intensity > 0) for (auto& peak : item.peaks) peak[1] /= total_intensity;
+      if (!item.peaks.empty() && total_intensity > 0) {
         augmented.push_back(std::move(item));
       }
     }
@@ -583,8 +659,8 @@ CascadiaMzmlReader::TensorBatch CascadiaMzmlReader::to_tensors(
       }
     }
     precursor_acc[i][0] =
-        static_cast<float>((spectrum.precursor_mz - kProtonMass) *
-                           spectrum.charge);
+        static_cast<float>((((spectrum.precursor_mz - 1.00727646688) *
+                           spectrum.charge) - kProtonMass) * spectrum.charge);
     precursor_acc[i][1] = static_cast<float>(spectrum.charge);
     batch.retention_times.push_back(spectrum.retention_time_seconds);
     batch.precursor_mz.push_back(spectrum.precursor_mz);

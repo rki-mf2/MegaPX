@@ -1,0 +1,29 @@
+{
+  "command": [
+    "${WORKSPACE}/MegaPX/build_libtorch/megapx_sequence",
+    "--sequence",
+    "${WORKSPACE}/demo.mzML",
+    "--model",
+    "${WORKSPACE}/MegaPX/models/cascadia_pretrained.pt",
+    "--out",
+    "${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia_pretrained/cpp",
+    "--threads",
+    "4",
+    "--batch-size",
+    "32",
+    "--score-threshold",
+    "0.8",
+    "--max-charge",
+    "4",
+    "--device",
+    "cpu"
+  ],
+  "shell_command": "${WORKSPACE}/MegaPX/build_libtorch/megapx_sequence --sequence ${WORKSPACE}/demo.mzML --model ${WORKSPACE}/MegaPX/models/cascadia_pretrained.pt --out ${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia_pretrained/cpp --threads 4 --batch-size 32 --score-threshold 0.8 --max-charge 4 --device cpu",
+  "cwd": "${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia_pretrained",
+  "elapsed_seconds": 257.25718533300096,
+  "cpu_seconds": 358.866475,
+  "peak_rss_mib": 3247.984375,
+  "exit_code": 0,
+  "stdout_log": "${WORKSPACE}/MegaPX/results/benchmark_python_default_verified/cascadia_pretrained/cpp.log",
+  "memory_measurement": "peak process RSS from wait4; host RAM, not GPU VRAM"
+}

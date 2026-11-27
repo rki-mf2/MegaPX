@@ -1,6 +1,8 @@
 #include "CascadiaSequenceForward.h"
 
 #include <torch/torch.h>
+#include <torch/csrc/jit/runtime/graph_executor.h>
+#include <torch/csrc/jit/python/update_graph_executor_opt.h>
 
 #include <algorithm>
 #include <cctype>
@@ -49,7 +51,17 @@ CascadiaSequenceForward::CascadiaSequenceForward(CascadiaModelConfig config)
 * @return None.
 */
 void CascadiaSequenceForward::load() {
-  module_ = torch::jit::load(config_.model_path.string(), device());
+  // This CLI owns its Torch runtime. Disable plan profiling/optimization for
+  // memory-constrained inference when requested; model weights are unchanged.
+  torch::jit::setGraphExecutorOptimize(config_.jit_optimize);
+  torch::jit::getProfilingMode().store(config_.jit_optimize);
+  torch::jit::getExecutorMode().store(config_.jit_optimize);
+  torch::jit::ExtraFilesMap extra{{"cascadia.vocab.tsv", ""}, {"cascadia.metadata.json", ""}};
+  module_ = torch::jit::load(config_.model_path.string(), device(), extra);
+  tokenizer_ = CascadiaPeptideTokenizer::from_bundle(extra.at("cascadia.vocab.tsv"));
+  metadata_ = extra.at("cascadia.metadata.json");
+  if (!module_.find_method("encode_spectra") || !module_.find_method("decode_tokens"))
+    throw std::runtime_error("Model bundle lacks cached encoder methods; re-export the checkpoint");
   module_.eval();
   loaded_ = true;
 }
@@ -170,6 +182,12 @@ CascadiaSequenceForward::GreedyResult CascadiaSequenceForward::greedy_decode(
     throw std::invalid_argument("max_length must be positive.");
   }
 
+  torch::InferenceMode inference;
+  auto spectrum_device = spectra.to(device());
+  auto precursor_device = precursors.to(device());
+  auto encoded = module_.get_method("encode_spectra")({spectrum_device}).toTuple();
+  const auto memory = encoded->elements()[0];
+  const auto memory_mask = encoded->elements()[1];
   const auto batch_size = spectra.size(0);
   auto tokens = torch::empty({batch_size, 0},
                              torch::TensorOptions().dtype(torch::kInt64)
@@ -182,37 +200,46 @@ CascadiaSequenceForward::GreedyResult CascadiaSequenceForward::greedy_decode(
                                    .device(device()));
 
   for (int64_t step = 0; step < max_length; ++step) {
-    auto logits = next_token_logits(spectra, precursors, tokens);
+    auto all_logits = module_.get_method("decode_tokens")({memory, memory_mask, precursor_device, tokens}).toTensor();
+    if (all_logits.size(2) != tokenizer.vocab_size_with_padding())
+      throw std::runtime_error("Model logits disagree with embedded vocabulary");
+    auto logits = all_logits.index({torch::indexing::Slice(), -1, torch::indexing::Slice()});
     auto scores = torch::softmax(logits, 1);
     auto next_tokens = std::get<1>(scores.max(1)).to(torch::kInt64);
     auto next_confidence = scores.gather(1, next_tokens.unsqueeze(1)).squeeze(1);
 
-    next_tokens = torch::where(
-        finished,
-        torch::full_like(next_tokens, tokenizer.stop_token_id()),
-        next_tokens);
-    next_confidence = torch::where(
-        finished,
-        torch::ones_like(next_confidence),
-        next_confidence);
+    if (config_.output_mode != "python") {
+      next_tokens = torch::where(finished, torch::full_like(next_tokens, tokenizer.stop_token_id()), next_tokens);
+      next_confidence = torch::where(finished, torch::ones_like(next_confidence), next_confidence);
+    }
 
     tokens = torch::cat({tokens, next_tokens.unsqueeze(1)}, 1);
     aa_confidence = torch::cat({aa_confidence, next_confidence.unsqueeze(1)}, 1);
     finished = finished.logical_or(next_tokens == tokenizer.stop_token_id());
 
-    if (finished.all().item<bool>()) {
+    if (config_.output_mode != "python" && finished.all().item<bool>()) {
       break;
     }
   }
 
-  auto peptide_log_scores =
-      torch::log(aa_confidence.clamp_min(1.0e-12)).sum(1).to(torch::kCPU);
-
   GreedyResult result;
   result.token_ids = tokens.to(torch::kCPU);
   result.amino_acid_confidence = aa_confidence.to(torch::kCPU);
-  result.peptide_log_scores = peptide_log_scores;
   result.sequences = tokenizer.detokenize(result.token_ids);
+  if (config_.output_mode == "python") {
+    // Cascadia 0.0.7 uses string length, including modification labels, and
+    // continues decoding after the first stop. Preserve this default exactly.
+    std::vector<torch::Tensor> log_scores;
+    for (int64_t row = 0; row < batch_size; ++row) {
+      int64_t length = 0;
+      for (unsigned char ch : result.sequences[row]) if ((ch & 0xc0) != 0x80) ++length;
+      auto count = std::min<int64_t>(length + 1, aa_confidence.size(1));
+      log_scores.push_back(torch::log(aa_confidence[row].slice(0, 0, count)).sum());
+    }
+    result.peptide_log_scores = torch::stack(log_scores).to(torch::kCPU);
+  } else {
+    result.peptide_log_scores = torch::log(aa_confidence.clamp_min(1.0e-12)).sum(1).to(torch::kCPU);
+  }
   return result;
 }
 
@@ -241,7 +268,9 @@ c10::Device CascadiaSequenceForward::device() const {
                    return static_cast<char>(std::tolower(ch));
                  });
 
-  if (requested == "cuda" || requested == "gpu") {
+  if (requested != "auto" && requested != "cpu" && requested != "cuda" && requested != "gpu")
+    throw std::runtime_error("Supported devices: auto, cpu, cuda");
+  if (requested == "cuda" || requested == "gpu" || (requested == "auto" && torch::cuda::is_available())) {
     if (!torch::cuda::is_available()) {
       throw std::runtime_error("Config requested CUDA, but CUDA is not available.");
     }

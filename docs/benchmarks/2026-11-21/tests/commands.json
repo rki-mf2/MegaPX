@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-21",
+  "runs": [
+    {
+      "log": "native-ctest.log",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "MegaPX/build_libtorch",
+        "--output-on-failure"
+      ],
+      "exit_code": 0,
+      "cwd": "${WORKSPACE}"
+    },
+    {
+      "log": "macos-ubsan-ctest.log",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "MegaPX/build_sanitizers",
+        "--output-on-failure"
+      ],
+      "exit_code": 0,
+      "cwd": "${WORKSPACE}"
+    },
+    {
+      "log": "pipeline.log",
+      "command": [
+        "python3",
+        "MegaPX/tests/test_cascadia_pipeline.py",
+        "--sequencer",
+        "MegaPX/build_libtorch/megapx_sequence",
+        "--bundle",
+        "MegaPX/models/cascadia.pt",
+        "--mzml",
+        "demo.mzML"
+      ],
+      "exit_code": 0,
+      "cwd": "${WORKSPACE}"
+    },
+    {
+      "log": "benchmark-tests.log",
+      "command": [
+        "python3",
+        "MegaPX/tests/test_cascadia_benchmark.py"
+      ],
+      "exit_code": 0,
+      "cwd": "${WORKSPACE}"
+    },
+    {
+      "log": "doxygen.log",
+      "command": [
+        "doxygen",
+        "Doxyfile"
+      ],
+      "exit_code": 0,
+      "cwd": "${WORKSPACE}/MegaPX"
+    }
+  ]
+}

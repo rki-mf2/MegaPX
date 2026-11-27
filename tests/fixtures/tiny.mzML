@@ -1,0 +1,34 @@
+<?xml version="1.0"?><mzML xmlns="http://psi.hupo.org/ms/mzml" version="1.1.0"><run id="fixture"><spectrumList count="3"><spectrum id="scan=1" index="0" defaultArrayLength="2">
+<cvParam accession="MS:1000511" name="ms level" value="1"/>
+<scanList count="1"><scan><cvParam accession="MS:1000016" name="scan start time" value="1" unitAccession="UO:0000031" unitName="minute"/></scan></scanList>
+<binaryDataArrayList count="2"><binaryDataArray encodedLength="28">
+<cvParam accession="MS:1000514" name="m/z array" value=""/>
+<cvParam accession="MS:1000523" name="64-bit float" value=""/>
+<cvParam accession="MS:1000574" name="zlib compression" value=""/>
+<binary>eJxjYAACh3oHEMVwo94BAA3MApc=</binary></binaryDataArray><binaryDataArray encodedLength="24">
+<cvParam accession="MS:1000515" name="intensity array" value=""/>
+<cvParam accession="MS:1000521" name="32-bit float" value=""/>
+<cvParam accession="MS:1000574" name="zlib compression" value=""/>
+<binary>eJxjYDjhxMBwwhEAB9MCFA==</binary></binaryDataArray></binaryDataArrayList></spectrum><spectrum id="scan=2" index="1" defaultArrayLength="2">
+<cvParam accession="MS:1000511" name="ms level" value="2"/>
+<scanList count="1"><scan><cvParam accession="MS:1000016" name="scan start time" value="60.2" unitAccession="UO:0000010" unitName="second"/></scan></scanList>
+<precursorList count="1"><precursor><isolationWindow><cvParam accession="MS:1000827" name="isolation window target m/z" value="500"/><cvParam accession="MS:1000828" name="isolation window lower offset" value="10"/><cvParam accession="MS:1000829" name="isolation window upper offset" value="10"/></isolationWindow></precursor></precursorList><binaryDataArrayList count="2"><binaryDataArray encodedLength="12">
+<cvParam accession="MS:1000514" name="m/z array" value=""/>
+<cvParam accession="MS:1000521" name="32-bit float" value=""/>
+<cvParam accession="MS:1000576" name="no compression" value=""/>
+<binary>AADJQgBASEM=</binary></binaryDataArray><binaryDataArray encodedLength="24">
+<cvParam accession="MS:1000515" name="intensity array" value=""/>
+<cvParam accession="MS:1000523" name="64-bit float" value=""/>
+<cvParam accession="MS:1000576" name="no compression" value=""/>
+<binary>AAAAAAAAIkAAAAAAAAAwQA==</binary></binaryDataArray></binaryDataArrayList></spectrum><spectrum id="scan=3" index="2" defaultArrayLength="2">
+<cvParam accession="MS:1000511" name="ms level" value="1"/>
+<scanList count="1"><scan><cvParam accession="MS:1000016" name="scan start time" value="61" unitAccession="UO:0000010" unitName="second"/></scan></scanList>
+<binaryDataArrayList count="2"><binaryDataArray encodedLength="28">
+<cvParam accession="MS:1000514" name="m/z array" value=""/>
+<cvParam accession="MS:1000523" name="64-bit float" value=""/>
+<cvParam accession="MS:1000574" name="zlib compression" value=""/>
+<binary>eJxjYAACl3oHEMVwod4BAA3gApM=</binary></binaryDataArray><binaryDataArray encodedLength="24">
+<cvParam accession="MS:1000515" name="intensity array" value=""/>
+<cvParam accession="MS:1000521" name="32-bit float" value=""/>
+<cvParam accession="MS:1000574" name="zlib compression" value=""/>
+<binary>eJxjYFjkxMDQYA8ABl0BpA==</binary></binaryDataArray></binaryDataArrayList></spectrum></spectrumList></run></mzML>

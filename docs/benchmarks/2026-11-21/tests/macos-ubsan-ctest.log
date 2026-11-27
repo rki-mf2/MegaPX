@@ -1,0 +1,12 @@
+Command: ctest --test-dir MegaPX/build_sanitizers --output-on-failure
+Exit code: 0
+
+Test project ${WORKSPACE}/MegaPX/build_sanitizers
+    Start 1: cascadia_native_tests
+1/2 Test #1: cascadia_native_tests ............   Passed    0.15 sec
+    Start 2: cascadia_benchmark_tests
+2/2 Test #2: cascadia_benchmark_tests .........   Passed    0.13 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   0.29 sec

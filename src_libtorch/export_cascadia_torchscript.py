@@ -11,7 +11,14 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-import sys
+import json
+import hashlib
+import os
+from typing import Optional, Tuple
+import copy
+import math
+
+os.environ.setdefault("NUMBA_CACHE_DIR", str(Path(__file__).resolve().parents[1] / ".numba_cache"))
 
 import torch
 
@@ -19,7 +26,8 @@ _torch_load = torch.load
 
 
 def _torch_load_trusted_checkpoint(*args, **kwargs):
-    kwargs.setdefault("weights_only", False)
+    if "weights_only" in __import__("inspect").signature(_torch_load).parameters:
+        kwargs.setdefault("weights_only", False)
     return _torch_load(*args, **kwargs)
 
 
@@ -31,19 +39,57 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--checkpoint", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--device", default="cpu")
-    parser.add_argument("--d-model", default=512, type=int)
-    parser.add_argument("--n-layers", default=9, type=int)
-    parser.add_argument("--n-head", default=8, type=int)
-    parser.add_argument("--dim-feedforward", default=1024, type=int)
+    parser.add_argument("--d-model", type=int)
+    parser.add_argument("--n-layers", type=int)
+    parser.add_argument("--n-head", type=int)
+    parser.add_argument("--dim-feedforward", type=int)
     parser.add_argument("--dropout", default=0.0, type=float)
     parser.add_argument("--rt-width", default=2.0, type=float)
-    parser.add_argument("--max-charge", default=10, type=int)
-    parser.add_argument("--n-tokens", default=28, type=int)
+    parser.add_argument("--max-charge", type=int)
+    parser.add_argument("--n-tokens", type=int)
     parser.add_argument("--example-batch", default=2, type=int)
     parser.add_argument("--example-peaks", default=16, type=int)
     parser.add_argument("--example-sequence-length", default=4, type=int)
+    parser.add_argument("--modifications", type=Path, help="Training PTMs as a JSON list of ProForma peptides")
+    parser.add_argument("--vocabulary", type=Path, help="Exact training vocabulary JSON: ordered tokens (padding=null) and masses mapping")
+    parser.add_argument("--freeze", action=argparse.BooleanOptionalAction, default=False, help="Freeze/in-line the scripted graph (higher loader memory); default --no-freeze keeps compact module methods")
+    parser.add_argument("--threads", type=int, default=4)
     return parser.parse_args()
 
+
+class StableAttention(torch.nn.MultiheadAttention):
+    """Use the public functional attention path, matching Cascadia predict_step.
+
+    PyTorch 2.0's eval fast path can differ from the grad-enabled path used by
+    Cascadia. Calling the functional implementation also avoids its repeated
+    mask-conversion warnings in a frozen C++ module.
+    """
+    def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor,
+                key_padding_mask: Optional[torch.Tensor] = None,
+                need_weights: bool = True, attn_mask: Optional[torch.Tensor] = None,
+                average_attn_weights: bool = True, is_causal: bool = False
+                ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+        result, weights = torch.nn.functional.multi_head_attention_forward(
+            query.transpose(0, 1), key.transpose(0, 1), value.transpose(0, 1),
+            self.embed_dim, self.num_heads, self.in_proj_weight, self.in_proj_bias,
+            self.bias_k, self.bias_v, self.add_zero_attn, 0.0,
+            self.out_proj.weight, self.out_proj.bias, training=False,
+            key_padding_mask=key_padding_mask, need_weights=need_weights,
+            attn_mask=attn_mask, average_attn_weights=average_attn_weights,
+            is_causal=is_causal)
+        return result.transpose(0, 1), weights
+
+
+def stable_attention(model):
+    for name, child in list(model.named_children()):
+        if isinstance(child, torch.nn.MultiheadAttention):
+            replacement = StableAttention(child.embed_dim, child.num_heads, dropout=0.0, batch_first=True)
+            replacement.load_state_dict(child.state_dict(), strict=True)
+            setattr(model, name, replacement.eval())
+        else:
+            stable_attention(child)
+        if isinstance(child, torch.nn.TransformerEncoderLayer):
+            child.activation_relu_or_gelu = 0
 
 class CascadiaSequenceModule(torch.nn.Module):
     """Small TorchScript-facing wrapper around Cascadia's _forward_step."""
@@ -61,6 +107,26 @@ class CascadiaSequenceModule(torch.nn.Module):
         self.final = model.decoder.final
         self.prec_layer = model.prec_layer
         self.frag_layer = model.frag_layer
+
+    @torch.jit.export
+    def encode_spectra(self, spectra: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        peak_padding_mask = ~spectra.sum(dim=2).to(torch.bool)
+        mask = torch.cat([torch.zeros((spectra.shape[0], 1), dtype=torch.bool, device=spectra.device), peak_padding_mask], dim=1)
+        peaks = self.peak_encoder(spectra)
+        peaks = torch.cat([self.latent_spectrum.expand(peaks.shape[0], -1, -1), peaks], dim=1)
+        return self.spectrum_transformer_encoder(peaks, src_key_padding_mask=mask), mask
+
+    @torch.jit.export
+    def decode_tokens(self, memory: torch.Tensor, memory_key_padding_mask: torch.Tensor, precursors: torch.Tensor, partial_sequence_tokens: torch.Tensor) -> torch.Tensor:
+        encoded_tokens = self.aa_encoder(partial_sequence_tokens)
+        masses = self.mass_encoder(precursors[:, None, 0])
+        charges = self.charge_encoder(precursors[:, 1].to(torch.int64) - 1)
+        target = torch.cat([masses + charges[:, None, :], encoded_tokens], dim=1)
+        padding_mask = target.sum(dim=2) == 0
+        target = self.peptide_positional_encoder(target)
+        length = target.shape[1]
+        mask = ~torch.triu(torch.ones((length, length), dtype=torch.bool, device=target.device)).transpose(0, 1)
+        return self.final(self.transformer_decoder(tgt=target, memory=memory, tgt_mask=mask, tgt_key_padding_mask=padding_mask, memory_key_padding_mask=memory_key_padding_mask))
 
     def forward(
         self,
@@ -116,9 +182,61 @@ class CascadiaSequenceModule(torch.nn.Module):
 
 def main() -> int:
     args = parse_args()
-    repo_root = Path(__file__).resolve().parents[1]
-    sys.path.insert(0, str(repo_root / "cascadia"))
+    torch.set_num_threads(args.threads)
+    torch.manual_seed(0)
+    from cascadia.depthcharge.primitives import Peptide
+    from cascadia.depthcharge.tokenizers import PeptideTokenizer
+    original_split = Peptide.split
+    def compatible_split(self):
+        if self.modifications is not None:
+            self.modifications = [mods or None for mods in self.modifications]
+        return original_split(self)
+    Peptide.split = compatible_split
 
+    checkpoint = torch.load(str(args.checkpoint), map_location="cpu")
+    state = checkpoint["state_dict"]
+    hp = checkpoint.get("hyper_parameters", {})
+    inferred = {
+        "d_model": state["decoder.aa_encoder.weight"].shape[1],
+        "n_layers": len({k.split(".")[3] for k in state if k.startswith("decoder.transformer_decoder.layers.")}),
+        "dim_feedforward": state["decoder.transformer_decoder.layers.0.linear1.weight"].shape[0],
+        "max_charge": state["decoder.charge_encoder.weight"].shape[0] - 1,
+        "n_tokens": state["decoder.aa_encoder.weight"].shape[0] - 1,
+    }
+    for name, value in inferred.items():
+        supplied = getattr(args, name)
+        if supplied is not None and supplied != value:
+            raise ValueError(f"--{name.replace('_', '-')}={supplied} disagrees with checkpoint ({value})")
+        setattr(args, name, value)
+    if args.n_head is None:
+        args.n_head = hp.get("n_head", 8)
+    if args.n_head < 1 or args.d_model % args.n_head:
+        raise ValueError("Attention heads must divide the embedding width")
+    if args.vocabulary:
+        vocab = json.loads(args.vocabulary.read_text())
+        tokens, masses = vocab["tokens"], vocab["masses"]
+        if tokens[0] is not None or len(set(tokens)) != len(tokens) or tokens.count("$") != 1:
+            raise ValueError("Vocabulary must start with null padding and contain unique tokens and one '$'")
+    else:
+        tokenizer = hp.get("tokenizer")
+        if args.modifications:
+            tokenizer = PeptideTokenizer.from_proforma(json.loads(args.modifications.read_text()), reverse=False, replace_isoleucine_with_leucine=True)
+        elif tokenizer is None or isinstance(tokenizer, int):
+            if args.n_tokens != 28:
+                raise ValueError("Nonstandard vocabulary: supply --vocabulary or --modifications from training; token meanings cannot be inferred from weight shapes")
+            tokenizer = PeptideTokenizer.from_massivekb(reverse=False, replace_isoleucine_with_leucine=True)
+        if getattr(tokenizer, "reverse", False):
+            raise ValueError("Reverse tokenizers require an explicit forward-order vocabulary export; this runtime supports Cascadia forward tokenizers")
+        tokens, masses = tokenizer.reverse_index, dict(tokenizer.residues)
+    if any(not isinstance(t, str) or not t or any(c in t for c in "\t\n\r") for t in tokens[1:]):
+        raise ValueError("Vocabulary tokens must be nonempty strings without tabs/newlines")
+    if len(tokens) != args.n_tokens + 1:
+        raise ValueError(f"Tokenizer has {len(tokens)} entries, checkpoint requires {args.n_tokens + 1}")
+    if any(not math.isfinite(float(m)) for m in masses.values()):
+        raise ValueError("Vocabulary masses must be finite")
+    if any(t not in masses for t in tokens[1:] if t != "$"):
+        raise ValueError("Every residue/modification token needs its training mass")
+    print("Architecture:", inferred, "attention heads:", args.n_head, flush=True)
     from cascadia.depthcharge.encoders.sinusoidal import FloatEncoder, PositionalEncoder
     from cascadia.depthcharge.transformers.peptides import PeptideTransformerDecoder
     from cascadia.model import AugmentedSpec2Pep
@@ -188,34 +306,55 @@ def main() -> int:
         max_charge=args.max_charge,
         map_location=args.device,
     )
+    model.spectrum_encoder.transformer_encoder.enable_nested_tensor = False
+    model.spectrum_encoder.transformer_encoder.use_nested_tensor = False
     model.eval().to(args.device)
+    del checkpoint, state
 
+    reference = copy.deepcopy(model)
+    stable_attention(model)
     wrapper = CascadiaSequenceModule(model).eval().to(args.device)
-    spectra = torch.zeros(
-        (args.example_batch, args.example_peaks, 4),
-        dtype=torch.float32,
-        device=args.device,
-    )
-    precursors = torch.ones(
-        (args.example_batch, 2),
-        dtype=torch.float32,
-        device=args.device,
-    )
-    precursors[:, 0] = 1000.0
-    precursors[:, 1] = 2.0
-    partial_tokens = torch.zeros(
-        (args.example_batch, args.example_sequence_length),
-        dtype=torch.long,
-        device=args.device,
-    )
-
     with torch.no_grad():
         traced = torch.jit.script(wrapper)
-        traced = torch.jit.freeze(traced)
+        if args.freeze:
+            traced = torch.jit.freeze(traced, preserved_attrs=["encode_spectra", "decode_tokens"])
 
+    # Compare to the original eager forward over empty and nonempty token prefixes.
+    # This catches exporter changes that silently change the model computation.
+    with torch.no_grad():
+        for batch, peaks, length in [(1, 7, 0), (args.example_batch, args.example_peaks, args.example_sequence_length), (1, 19, 1)]:
+            spectra = torch.rand(batch, peaks, 4, device=args.device)
+            spectra[:, :, 0] *= 1000
+            spectra[:, :, 3] = 2
+            if peaks > 7:
+                spectra[:, -2:] = 0
+            precursors = torch.tensor([[2000., 2.]], device=args.device).expand(batch, -1)
+            prefix = torch.full((batch, length), 2, dtype=torch.long, device=args.device)
+            with torch.enable_grad():
+                expected = tuple(x.detach() for x in reference._forward_step(spectra, precursors, prefix))
+            actual = traced(spectra, precursors, prefix)
+            for a, b in zip(actual, expected):
+                torch.testing.assert_close(a, b, rtol=2e-4, atol=2e-4)
+            memory, mask = traced.encode_spectra(spectra)
+            torch.testing.assert_close(traced.decode_tokens(memory, mask, precursors, prefix), expected[0], rtol=2e-4, atol=2e-4)
+    metadata = dict(format="cascadia-bundle-v1", frozen=args.freeze, architecture=inferred, n_head=args.n_head,
+                    rt_width=args.rt_width, torch_version=torch.__version__,
+                    checkpoint=str(args.checkpoint.name), tokenizer_direction="forward",
+                    preprocessing="cascadia-0.0.7", vocabulary_source="explicit vocabulary" if args.vocabulary else "custom PTMs" if args.modifications else "checkpoint tokenizer" if hp.get("tokenizer") is not None else "canonical MassiveKB (public Cascadia models)", parity="passed: 3 variable input shapes")
+    digest = hashlib.sha256()
+    with args.checkpoint.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    metadata["checkpoint_sha256"] = digest.hexdigest()
+    vocabulary = "#cascadia-bundle-v1\n" + "".join(f"{t}\t{float(masses.get(t, 0)):.15g}\n" for t in tokens[1:])
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    traced.save(str(args.output))
-    print(f"Saved TorchScript model to {args.output}")
+    extra = {"cascadia.vocab.tsv": vocabulary, "cascadia.metadata.json": json.dumps(metadata, indent=2)}
+    torch.jit.save(traced, str(args.output), _extra_files=extra)
+    restored = torch.jit.load(str(args.output), map_location=args.device)
+    with torch.no_grad():
+        torch.testing.assert_close(restored(spectra, precursors, prefix)[0], actual[0])
+    args.output.with_suffix(args.output.suffix + ".json").write_text(json.dumps(metadata, indent=2) + "\n")
+    print(f"Saved validated TorchScript bundle to {args.output}")
     return 0
 
 

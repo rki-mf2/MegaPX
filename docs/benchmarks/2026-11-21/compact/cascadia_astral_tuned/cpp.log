@@ -1,0 +1,108 @@
+Loading Cascadia bundle "${WORKSPACE}/MegaPX/models/compact/cascadia_astral_tuned.pt"
+Sequencing 2880 candidates; encoder cached once per batch
+Decoded 32/2880; accepted 1
+Decoded 64/2880; accepted 2
+Decoded 96/2880; accepted 3
+Decoded 128/2880; accepted 3
+Decoded 160/2880; accepted 3
+Decoded 192/2880; accepted 5
+Decoded 224/2880; accepted 5
+Decoded 256/2880; accepted 5
+Decoded 288/2880; accepted 7
+Decoded 320/2880; accepted 7
+Decoded 352/2880; accepted 9
+Decoded 384/2880; accepted 9
+Decoded 416/2880; accepted 9
+Decoded 448/2880; accepted 11
+Decoded 480/2880; accepted 11
+Decoded 512/2880; accepted 11
+Decoded 544/2880; accepted 12
+Decoded 576/2880; accepted 12
+Decoded 608/2880; accepted 14
+Decoded 640/2880; accepted 14
+Decoded 672/2880; accepted 14
+Decoded 704/2880; accepted 16
+Decoded 736/2880; accepted 17
+Decoded 768/2880; accepted 17
+Decoded 800/2880; accepted 17
+Decoded 832/2880; accepted 19
+Decoded 864/2880; accepted 19
+Decoded 896/2880; accepted 19
+Decoded 928/2880; accepted 21
+Decoded 960/2880; accepted 21
+Decoded 992/2880; accepted 21
+Decoded 1024/2880; accepted 24
+Decoded 1056/2880; accepted 24
+Decoded 1088/2880; accepted 24
+Decoded 1120/2880; accepted 26
+Decoded 1152/2880; accepted 26
+Decoded 1184/2880; accepted 26
+Decoded 1216/2880; accepted 26
+Decoded 1248/2880; accepted 28
+Decoded 1280/2880; accepted 28
+Decoded 1312/2880; accepted 28
+Decoded 1344/2880; accepted 30
+Decoded 1376/2880; accepted 30
+Decoded 1408/2880; accepted 30
+Decoded 1440/2880; accepted 30
+Decoded 1472/2880; accepted 30
+Decoded 1504/2880; accepted 30
+Decoded 1536/2880; accepted 31
+Decoded 1568/2880; accepted 31
+Decoded 1600/2880; accepted 31
+Decoded 1632/2880; accepted 31
+Decoded 1664/2880; accepted 31
+Decoded 1696/2880; accepted 31
+Decoded 1728/2880; accepted 32
+Decoded 1760/2880; accepted 32
+Decoded 1792/2880; accepted 32
+Decoded 1824/2880; accepted 32
+Decoded 1856/2880; accepted 35
+Decoded 1888/2880; accepted 35
+Decoded 1920/2880; accepted 35
+Decoded 1952/2880; accepted 35
+Decoded 1984/2880; accepted 35
+Decoded 2016/2880; accepted 35
+Decoded 2048/2880; accepted 35
+Decoded 2080/2880; accepted 35
+Decoded 2112/2880; accepted 35
+Decoded 2144/2880; accepted 35
+Decoded 2176/2880; accepted 35
+Decoded 2208/2880; accepted 35
+Decoded 2240/2880; accepted 35
+Decoded 2272/2880; accepted 35
+Decoded 2304/2880; accepted 35
+Decoded 2336/2880; accepted 35
+Decoded 2368/2880; accepted 35
+Decoded 2400/2880; accepted 35
+Decoded 2432/2880; accepted 35
+Decoded 2464/2880; accepted 35
+Decoded 2496/2880; accepted 35
+Decoded 2528/2880; accepted 35
+Decoded 2560/2880; accepted 35
+Decoded 2592/2880; accepted 35
+Decoded 2624/2880; accepted 35
+Decoded 2656/2880; accepted 35
+Decoded 2688/2880; accepted 35
+Decoded 2720/2880; accepted 35
+Decoded 2752/2880; accepted 35
+Decoded 2784/2880; accepted 35
+Decoded 2816/2880; accepted 35
+Decoded 2848/2880; accepted 35
+Decoded 2880/2880; accepted 35
+Results written to "${WORKSPACE}/MegaPX/results/benchmark_compact/cascadia_astral_tuned/cpp"
+
+**************** MegaPX Sequencing Usage Report ****************
+Status                 : complete
+Real time (total)      : 363.208 sec
+Real time (sequencing) : 363.208 sec
+CPU time (total)       : 503.321 sec
+CPU time (sequencer)   : 503.321 sec
+Peak RSS (sequencer)   : 963.375 MiB
+***************************************************************
+
+=== End-to-end benchmark measurement ===
+Elapsed time: 363.388070 sec
+CPU time (user + system): 503.494192 sec
+Peak process RSS: 963.375000 MiB
+Exit code: 0

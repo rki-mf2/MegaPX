@@ -1,0 +1,13 @@
+PROJECT_NAME           = MegaPX
+PROJECT_BRIEF          = "Peptide assignment and native Cascadia DIA sequencing"
+OUTPUT_DIRECTORY       = build-docs
+INPUT                  = src src_libtorch
+RECURSIVE              = YES
+EXCLUDE                = src/seqan3
+FILE_PATTERNS          = *.hpp *.h *.cpp *.hxx
+EXTRACT_ALL            = YES
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+HAVE_DOT               = NO
+WARN_IF_UNDOCUMENTED   = NO
+QUIET                  = YES

@@ -1,0 +1,38 @@
+{
+  "measurements": [
+    {
+      "model": "cascadia",
+      "rows": 220,
+      "cpp_compact_seconds": 362.631838833011,
+      "cpp_compact_peak_mib": 847.90625,
+      "cpp_frozen_peak_mib": 3258.625,
+      "ram_reduction_percent": 73.9796309793241,
+      "python_seconds": 1189.7301649169822,
+      "python_peak_mib": 2293.734375,
+      "agreement": true
+    },
+    {
+      "model": "cascadia_pretrained",
+      "rows": 40,
+      "cpp_compact_seconds": 361.96647191702505,
+      "cpp_compact_peak_mib": 870.265625,
+      "cpp_frozen_peak_mib": 3247.984375,
+      "ram_reduction_percent": 73.20597870794869,
+      "python_seconds": 1690.7487791249878,
+      "python_peak_mib": 2204.734375,
+      "agreement": true
+    },
+    {
+      "model": "cascadia_astral_tuned",
+      "rows": 35,
+      "cpp_compact_seconds": 363.3880701669841,
+      "cpp_compact_peak_mib": 963.375,
+      "cpp_frozen_peak_mib": 3172.1875,
+      "ram_reduction_percent": 69.63057826815093,
+      "python_seconds": 1665.8677065419906,
+      "python_peak_mib": 2304.390625,
+      "agreement": true
+    }
+  ],
+  "python_measurements": "Reused from full reference run; not rerun for compact variant"
+}
